@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="description" content="Québec Combat — jeu de combat parodique : politiciens du Québec contre politiciens fédéraux.">
+  <title>Québec Combat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="game" width="1280" height="720"></canvas>
+    <div id="touch" aria-hidden="true">
+      <div class="pad">
+        <button data-key="T_up" class="up">▲</button>
+        <button data-key="T_left" class="left">◀</button>
+        <button data-key="T_right" class="right">▶</button>
+        <button data-key="T_down" class="down">▼</button>
+      </div>
+      <div class="btns">
+        <button data-key="T_lp" class="lp">POING</button>
+        <button data-key="T_hk" class="hk">PIED</button>
+        <button data-key="T_sp" class="sp">SPÉCIAL</button>
+      </div>
+    </div>
+  </div>
+  <script src="js/util.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/characters.js"></script>
+  <script src="js/stages.js"></script>
+  <script src="js/fighter.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
