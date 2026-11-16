@@ -7,6 +7,7 @@ const STAGES = {
   colline: { name: 'La Colline du Parlement', place: 'Ottawa, au coucher du soleil', music: 2, floor: '#3d6b2f' },
   vieuxquebec: { name: 'La Terrasse Dufferin', place: 'Vieux-Québec, en hiver', music: 0, floor: '#7b6a58' },
   pontjc: { name: 'Le pont Jacques-Cartier', place: 'Montréal, la nuit', music: 1, floor: '#3a3a44' },
+  plaines: { name: 'Les Plaines d\'Abraham', place: 'Québec, quelque part dans l\'Histoire', music: 2, floor: '#4d7a36' },
 };
 const STAGE_IDS = Object.keys(STAGES);
 const stageCache = {};
@@ -391,7 +392,87 @@ const STAGE_STATIC = {
   },
 };
 
+STAGE_STATIC.plaines = function (ctx) {
+  // ciel sépia, comme une vieille gravure
+  let g = ctx.createLinearGradient(0, 0, 0, GROUND);
+  g.addColorStop(0, '#c9b48a');
+  g.addColorStop(0.6, '#ead9b0');
+  g.addColorStop(1, '#f4e8c8');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  for (const [x, y, r] of [[200, 120, 50], [260, 130, 40], [820, 90, 60], [900, 105, 44], [1100, 180, 36]]) { ellipse(ctx, x, y, r * 1.8, r * 0.6); ctx.fill(); }
+  // rive sud et fleuve
+  ctx.fillStyle = '#8f9a78';
+  ctx.beginPath();
+  ctx.moveTo(0, 400); ctx.quadraticCurveTo(300, 350, 640, 390); ctx.quadraticCurveTo(1000, 430, W, 380); ctx.lineTo(W, 470); ctx.lineTo(0, 470);
+  ctx.fill();
+  g = ctx.createLinearGradient(0, 430, 0, 520);
+  g.addColorStop(0, '#7fa3b0');
+  g.addColorStop(1, '#5b8494');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 440, W, 90);
+  // voiliers
+  for (const [x, sc] of [[300, 1], [520, 0.7], [980, 0.85]]) {
+    ctx.save(); ctx.translate(x, 470); ctx.scale(sc, sc);
+    ctx.fillStyle = '#4a3323';
+    ctx.beginPath(); ctx.moveTo(-50, 0); ctx.lineTo(50, 0); ctx.lineTo(36, 18); ctx.lineTo(-36, 18); ctx.fill();
+    ctx.fillRect(-2, -80, 4, 80); ctx.fillRect(-26, -60, 3, 60); ctx.fillRect(24, -56, 3, 56);
+    ctx.fillStyle = '#f7f1df';
+    ctx.fillRect(-18, -76, 34, 26); ctx.fillRect(-20, -46, 38, 30);
+    ctx.fillRect(-38, -54, 22, 34); ctx.fillRect(14, -50, 22, 32);
+    ctx.restore();
+  }
+  // Citadelle
+  ctx.fillStyle = '#8d8676';
+  ctx.beginPath();
+  ctx.moveTo(840, 520); ctx.lineTo(880, 420); ctx.lineTo(1000, 400); ctx.lineTo(1120, 420); ctx.lineTo(W, 440); ctx.lineTo(W, 520);
+  ctx.fill();
+  ctx.fillStyle = '#6f6a5c';
+  for (let i = 0; i < 9; i++) ctx.fillRect(890 + i * 44, 404 + Math.abs(i - 2.5) * 5, 20, 14);
+  ctx.fillStyle = '#4a4538';
+  ctx.fillRect(1040, 330, 4, 80);
+  // falaise et plaine
+  g = ctx.createLinearGradient(0, 500, 0, H);
+  g.addColorStop(0, '#6f9a4a');
+  g.addColorStop(1, '#3f6a2c');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(0, 530); ctx.quadraticCurveTo(400, 500, 800, 520); ctx.quadraticCurveTo(1100, 530, W, 510); ctx.lineTo(W, H); ctx.lineTo(0, H);
+  ctx.fill();
+  // canons
+  for (const [x, d] of [[150, 1], [1130, -1]]) {
+    ctx.save(); ctx.translate(x, 590); ctx.scale(d, 1);
+    ctx.fillStyle = '#2b2b2b';
+    ctx.save(); ctx.rotate(-0.2); roundRect(ctx, -30, -18, 96, 22, 8); ctx.fill(); ctx.restore();
+    ctx.fillStyle = '#5a3d1e';
+    circle(ctx, 0, 6, 24); ctx.fill();
+    ctx.strokeStyle = '#2f1b0c'; ctx.lineWidth = 4; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-24, 6); ctx.lineTo(24, 6); ctx.moveTo(0, -18); ctx.lineTo(0, 30); ctx.stroke();
+    ctx.fillStyle = '#1a1a1a';
+    for (let i = 0; i < 3; i++) { circle(ctx, 50 + i * 16, 24, 8); ctx.fill(); }
+    ctx.restore();
+  }
+  // herbes
+  ctx.strokeStyle = 'rgba(40,80,30,0.6)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 120; i++) {
+    const x = (i * 97) % W, y = 560 + (i * 53) % 150;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 3, y - 10); ctx.moveTo(x + 5, y); ctx.lineTo(x + 9, y - 8); ctx.stroke();
+  }
+  // vignette de vieille photo
+  g = ctx.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, 760);
+  g.addColorStop(0, 'rgba(60,40,10,0)');
+  g.addColorStop(1, 'rgba(60,40,10,0.45)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+};
+
 const STAGE_DYNAMIC = {
+  plaines(ctx, t) {
+    // drapeau qui flotte sur la Citadelle
+    drawQcFlag(ctx, 1044, 332, 54, 34, Math.sin(t * 0.08) * 4);
+  },
   salonbleu(ctx, t) {
     // lustres scintillants
     for (const x of [200, 640, 1080]) {

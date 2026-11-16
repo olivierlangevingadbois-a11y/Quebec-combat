@@ -52,6 +52,14 @@ function text(ctx, str, x, y, size, fill = '#fff', opts = {}) {
   ctx.font = `${opts.weight || ''} ${size}px ${opts.font || FONT}`;
   ctx.textAlign = opts.align || 'center';
   ctx.textBaseline = opts.base || 'middle';
+  // Si le contexte est en miroir (personnage qui regarde à gauche), on redresse le texte
+  const m = ctx.getTransform();
+  if (m.a * m.d - m.b * m.c < 0) {
+    ctx.translate(x, y);
+    ctx.scale(-1, 1);
+    x = 0;
+    y = 0;
+  }
   if (opts.stroke !== false) {
     ctx.lineJoin = 'round';
     ctx.lineWidth = opts.lw || Math.max(3, size * 0.14);

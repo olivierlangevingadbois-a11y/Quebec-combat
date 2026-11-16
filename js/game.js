@@ -7,7 +7,10 @@ const DIFF_NAMES = ['Facile', 'Normal', 'Difficile'];
 const GRID = [
   ['legault', 'pspp', 'ghazal', 'duhaime', 'random'],
   ['carney', 'poilievre', 'blanchet', 'singh', 'trudeau'],
+  ['macdonald', 'riel', 'baldwin', 'papineau', 'laurier'],
+  ['duplessis', 'levesque', 'pet', 'chretien', 'casgrain'],
 ];
+const ROWS = GRID.length, COLS = 5;
 const HIT_WORDS = ['PAF!', 'BANG!', 'POW!', 'OUCH!', 'BING!', 'TABARNOUCHE!', 'SACRÉ COUP!', 'AYOYE!', 'WOUF!'];
 
 const G = {
@@ -30,8 +33,12 @@ const G = {
   },
 
   // ===================== Combat =====================
-  startMatch(p1, p2, stage, ctrl2) {
-    this.fighters = [new Fighter(ROSTER_BY_ID[p1], 0), new Fighter(ROSTER_BY_ID[p2], 1)];
+  startMatch(p1, p2, stage, ctrl2, skins = [0, 0]) {
+    skins = skins.slice();
+    if (p1 === p2 && skins[0] === skins[1]) skins[1] = skins[0] === 1 ? 0 : 1; // combat miroir : on distingue J2
+    this.fighters = [new Fighter(ROSTER_BY_ID[p1], 0, skins[0]), new Fighter(ROSTER_BY_ID[p2], 1, skins[1])];
+    this.newUnlocks = [];
+    this.winQuote = '';
     this.ctrls = ctrl2;
     this.wins = [0, 0];
     this.round = 1;
@@ -45,6 +52,8 @@ const G = {
     this.fx = [];
     this.texts = [];
     this.pending = [];
+    this.items = [];
+    this.itemT = rand(240, 420);
     this.timer = 99;
     this.timerF = 0;
     this.phase = 'intro';
@@ -124,6 +133,7 @@ const G = {
         }
       }
     this.projectiles = this.projectiles.filter((p) => !p.dead);
+    this.updateItems();
     this.updateFx();
 
     if (this.phase === 'fight') {
@@ -192,7 +202,7 @@ const G = {
     if (def.state === 'hit' || def.state === 'knock') att.combo++;
     else att.combo = 1;
     const scale = att.combo > 1 ? Math.max(0.45, 1 - (att.combo - 1) * 0.12) : 1;
-    const dmg = Math.max(1, Math.round(a.dmg * att.def.pow * scale));
+    const dmg = Math.max(1, Math.round(a.dmg * att.def.pow * scale * (att.boost > 0 ? 1.35 : 1)));
     def.hp = Math.max(0, def.hp - dmg);
     def.atk = null;
     def.sp = null;
@@ -261,6 +271,9 @@ const G = {
       if (this.matchWinner !== 2) {
         const w = this.fighters[this.matchWinner];
         Sfx.say(`${w.def.name} l'emporte!`);
+        this.winQuote = pick(w.def.win);
+        const human = this.mode === 'versus' || ((this.mode === 'arcade' || this.mode === 'cpu') && this.matchWinner === 0);
+        if (human) this.newUnlocks = recordWin(w.def.id, false);
       }
       Sfx.stopMusic();
       this.phase = 'over';
@@ -285,13 +298,15 @@ const G = {
     const dims = {
       tunnel: [100, 56], battery: [140, 74], ballot: [68, 48], radio: [80, 80], signs: [220, 150], rate: [80, 62],
       axe: [56, 56], bigaxe: [160, 160], fleur: [56, 64], sock: [50, 56], tooth: [120, 130],
+      bottle: [40, 60], train: [240, 120], bison: [240, 90], lafontaine: [110, 170], scroll: [64, 54], sunny: [60, 60],
+      padlock: [56, 60], smoke: [80, 70], pepper: [44, 60], vote: [60, 46],
     }[s.kind] || [60, 60];
     const wave = s.type === 'wave';
     const p = new Projectile({
       owner: f, kind: s.kind, x: f.x + f.facing * (40 + dims[0] / 2), y: wave ? GROUND - dims[1] / 2 - 2 : f.y - 160 * FS,
       vx: f.facing * s.speed, dmg: s.dmg, hits: s.hits || 1, w: dims[0], hh: dims[1], isSuper,
       knock: isSuper, h: wave && !isSuper ? 'low' : 'mid', life: 200,
-      spin: s.kind === 'axe' ? 0.38 : s.kind === 'bigaxe' ? 0.22 : s.kind === 'sock' ? 0.3 : 0,
+      spin: s.kind === 'axe' ? 0.38 : s.kind === 'bigaxe' ? 0.22 : s.kind === 'sock' || s.kind === 'bottle' || s.kind === 'pepper' ? 0.3 : 0,
     });
     if (s.kind === 'fleur') { p.w = 50; p.hh = 60; }
     this.projectiles.push(p);
@@ -301,7 +316,7 @@ const G = {
     const n = s.count || 8;
     for (let i = 0; i < n; i++) {
       const p = new Projectile({
-        owner: f, kind: 'fleur', x: clamp(opp.x + (i - (n - 1) / 2) * 50 + rand(-15, 15), 40, W - 40), y: -60,
+        owner: f, kind: s.kind || 'fleur', x: clamp(opp.x + (i - (n - 1) / 2) * 50 + rand(-15, 15), 40, W - 40), y: -60,
         vy: 5, grav: 0.3, dmg: s.dmg / n, hits: 1, w: 46, hh: 56, isSuper: true, ground: true, life: 400, dir: 1,
         knock: i === n - 1,
       });
@@ -310,26 +325,99 @@ const G = {
   },
   spawnDrop(f, opp, s) {
     this.projectiles.push(new Projectile({
-      owner: f, kind: 'bloc', x: opp.x, y: -260, vy: 2, grav: 0.55, dmg: s.dmg, hits: 1, w: 170, hh: 170,
+      owner: f, kind: s.kind || 'bloc', x: opp.x, y: -260, vy: 2, grav: 0.55, dmg: s.dmg, hits: 1, w: 170, hh: 170,
       isSuper: true, ground: true, knock: true, life: 400, h: 'mid',
     }));
   },
   spawnBeam(f, s) {
     const len = 1100;
     this.projectiles.push(new Projectile({
-      owner: f, kind: 'beam', attach: true, dir: f.facing, x: f.x + f.facing * (60 + len / 2), y: f.y - 170 * FS,
+      owner: f, kind: 'beam', style: s.kind, attach: true, dir: f.facing, x: f.x + f.facing * (60 + len / 2), y: f.y - 170 * FS,
       w: len, hh: 100, dmg: s.dmg, hits: s.hits, life: s.dur, isSuper: true, knock: true,
     }));
     this.shake = 8;
   },
   impact(p) {
-    if (p.kind === 'bloc') {
+    const big = { bloc: ['BLOQUÉ!', '#2fb4d4'], century: ['BIENVENUE AU XXe!', '#c9a227'], bighead: ['QUELLE TÊTE!', '#2e8b57'] }[p.kind];
+    if (big) {
       this.shake = 20;
       Sfx.boom();
       this.dust(p.x, 3);
-      this.popText('BLOQUÉ!', p.x, GROUND - 200, 50, '#2fb4d4');
+      this.popText(big[0], p.x, GROUND - 200, 50, big[1]);
     } else {
       this.sparks(p.x, GROUND - 10, '#fff', 6);
+    }
+  },
+
+  // ----- Objets -----
+  updateItems() {
+    if (!Store.data.items) return;
+    if (this.phase === 'fight' && --this.itemT <= 0) {
+      this.itemT = rand(380, 640);
+      if (this.items.length < 2) this.items.push({ kind: pick(ITEM_KINDS), x: rand(160, W - 160), y: -40, vy: 3, t: 0, life: 540 });
+    }
+    const top = GROUND - 28;
+    for (const it of this.items) {
+      it.t++;
+      if (it.y < top) {
+        it.vy += 0.25;
+        it.y = Math.min(top, it.y + it.vy);
+        if (it.y >= top) { this.dust(it.x, 0.5); Sfx.land(); }
+      } else if (--it.life <= 0) it.dead = true;
+      if (this.phase !== 'fight' || it.y < GROUND - 160) continue;
+      const near = this.fighters
+        .filter((f) => ['idle', 'walk', 'crouch', 'jump', 'attack'].includes(f.state) && Math.abs(f.x - it.x) < 58 && f.y > GROUND - 80)
+        .sort((a, b) => Math.abs(a.x - it.x) - Math.abs(b.x - it.x));
+      if (near.length) { this.pickup(near[0], it); it.dead = true; }
+    }
+    this.items = this.items.filter((i) => !i.dead);
+  },
+  pickup(f, it) {
+    const opp = this.fighters[1 - f.side];
+    const base = { owner: f, item: true, life: 220 };
+    switch (it.kind) {
+      case 'poutine': f.hp = Math.min(f.maxHp, f.hp + 150); f.dispHp = Math.max(f.dispHp, f.hp); break;
+      case 'insuline': f.meter = 100; break;
+      case 'coupe': f.boost = 480; break;
+      case 'sirop': opp.slow = 300; break;
+      case 'castor':
+        this.projectiles.push(new Projectile(Object.assign(base, { kind: 'castor', x: f.x + f.facing * 70, y: GROUND - 30, vx: f.facing * 7.5, dmg: 75, w: 80, hh: 56, h: 'low' })));
+        break;
+      case 'rondelle':
+        this.projectiles.push(new Projectile(Object.assign(base, { kind: 'puck', x: f.x + f.facing * 60, y: GROUND - 14, vx: f.facing * 17, dmg: 55, w: 44, hh: 24, h: 'low' })));
+        break;
+      case 'basket':
+        this.projectiles.push(new Projectile(Object.assign(base, { kind: 'bball', x: f.x + f.facing * 50, y: f.y - 190, vx: f.facing * 7.5, vy: -5, grav: 0.6, bounce: 4, spin: 0.2 * f.facing, dmg: 70, w: 48, hh: 48, life: 300 })));
+        break;
+    }
+    const I = ITEMS[it.kind];
+    this.popText(I.name, it.x, GROUND - 230, 36, '#c8102e', 70);
+    this.popText(I.sub, it.x, GROUND - 180, 22, '#141414', 70);
+    this.sparks(it.x, it.y, '#ffe14d', 10);
+    Sfx.confirm();
+  },
+  drawItems(ctx) {
+    for (const it of this.items) {
+      const grounded = it.y >= GROUND - 28;
+      if (grounded && it.life < 120 && it.life % 10 < 4) continue; // clignote avant de disparaître
+      ctx.save();
+      ctx.translate(it.x, it.y + (grounded ? Math.sin(it.t * 0.1) * 4 - 4 : 0));
+      const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 46);
+      g.addColorStop(0, 'rgba(255,235,120,0.75)');
+      g.addColorStop(1, 'rgba(255,235,120,0)');
+      ctx.fillStyle = g;
+      circle(ctx, 0, 0, 46); ctx.fill();
+      if (!grounded) {
+        // petit parachute
+        ctx.strokeStyle = '#141414'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-30, -50); ctx.lineTo(0, -10); ctx.lineTo(30, -50); ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(0, -50, 32, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#c8102e';
+        ctx.beginPath(); ctx.arc(0, -50, 32, Math.PI * 1.33, Math.PI * 1.67); ctx.lineTo(0, -50); ctx.closePath(); ctx.fill();
+      }
+      drawItemIcon(ctx, it.kind, it.t);
+      ctx.restore();
     }
   },
 
@@ -370,6 +458,7 @@ const G = {
     const [a, b] = this.fighters;
     const order = a.state === 'attack' || a.state === 'special' ? [b, a] : [a, b];
     for (const f of order) f.draw(ctx);
+    this.drawItems(ctx);
     for (const p of this.projectiles) drawProjectileShape(ctx, p, this.t);
     for (const p of this.fx) {
       const k = p.life / p.max;
@@ -514,7 +603,7 @@ const G = {
         ctx.lineWidth = 3;
         ctx.save();
         ctx.translate(cx, y + bh + 22);
-        if (f.def.level === 'QC') fleurPath(ctx, 12); else maplePath(ctx, 13);
+        if (f.def.level === 'QC' || f.def.qc) fleurPath(ctx, 12); else maplePath(ctx, 13);
         ctx.fill();
         ctx.stroke();
         ctx.restore();
@@ -568,6 +657,7 @@ const MENU_ITEMS = () => [
   { label: 'DÉMO : CPU contre CPU', desc: 'Regardez l\'ordinateur se chicaner tout seul.', go: () => G.startDemo() },
   { label: `DIFFICULTÉ : ${DIFF_NAMES[G.diff]}`, desc: 'Gauche / droite pour changer.', go: () => { G.diff = (G.diff + 1) % 3; }, lr: (d) => { G.diff = (G.diff + d + 3) % 3; } },
   { label: `SON : ${Sfx.enabled ? 'OUI' : 'NON'}  ·  MUSIQUE : ${Sfx.music ? 'OUI' : 'NON'}`, desc: 'Entrée : son · Gauche/droite : musique.', go: () => { Sfx.enabled = !Sfx.enabled; }, lr: () => { Sfx.music = !Sfx.music; } },
+  { label: `OBJETS : ${Store.data.items ? 'OUI' : 'NON'}`, desc: 'Poutine, castor, sirop, Coupe Stanley... qui tombent du ciel pendant le combat.', go: () => { Store.data.items = !Store.data.items; Store.save(); }, lr: () => { Store.data.items = !Store.data.items; Store.save(); } },
   { label: 'COMMANDES', desc: 'Comment se battre comme un vrai député.', go: () => G.go('controls') },
 ];
 
@@ -587,7 +677,7 @@ G.startDemo = function () {
   this.mode = 'demo';
   const ids = shuffle(ROSTER.map((c) => c.id));
   const p = ROSTER_BY_ID[ids[1]];
-  this.startMatch(ids[0], ids[1], p.stage, [new AI(1.4), new AI(1.4)]);
+  this.startMatch(ids[0], ids[1], p.stage, [new AI(1.4), new AI(1.4)], [Math.random() < 0.4 ? 1 + Math.floor(Math.random() * 3) : 0, 0]);
 };
 
 function selCellId(cur) {
@@ -604,7 +694,7 @@ const SCENES = {
   title: {
     update() {
       if (G.sceneT % 180 === 0) {
-        const q = ROSTER.filter((c) => c.level === 'QC'), f = ROSTER.filter((c) => c.level === 'CA');
+        const q = ROSTER.filter((c) => c.level === 'QC' || c.qc), f = ROSTER.filter((c) => c.level !== 'QC' && !c.qc);
         G.titlePair = [pick(q).id, pick(f).id];
       }
       if (Input.edge('confirm') || Input.edge('lp') || Input.edge('pause')) { Sfx.init(); Sfx.confirm(); G.go('menu'); }
@@ -650,7 +740,7 @@ const SCENES = {
       text(ctx, 'QUÉBEC COMBAT', W / 2, 80, 80, '#ffe14d', { stroke: '#c8102e', lw: 12 });
       const items = MENU_ITEMS();
       items.forEach((it, i) => {
-        const y = 175 + i * 66;
+        const y = 160 + i * 59;
         const sel = i === G.menuIdx;
         ctx.fillStyle = sel ? 'rgba(255,225,77,0.95)' : 'rgba(0,0,0,0.55)';
         roundRect(ctx, W / 2 - 300, y - 26, 600, 52, 12);
@@ -711,9 +801,11 @@ const SCENES = {
           continue;
         }
         const cur = S.cur[ci];
-        if (Input.edge('left', i)) { cur.c = (cur.c + 4) % 5; Sfx.select(); }
-        if (Input.edge('right', i)) { cur.c = (cur.c + 1) % 5; Sfx.select(); }
-        if (Input.edge('up', i) || Input.edge('down', i)) { cur.r = 1 - cur.r; Sfx.select(); }
+        if (Input.edge('left', i)) { cur.c = (cur.c + COLS - 1) % COLS; Sfx.select(); }
+        if (Input.edge('right', i)) { cur.c = (cur.c + 1) % COLS; Sfx.select(); }
+        if (Input.edge('up', i)) { cur.r = (cur.r + ROWS - 1) % ROWS; Sfx.select(); }
+        if (Input.edge('down', i)) { cur.r = (cur.r + 1) % ROWS; Sfx.select(); }
+        if (Input.edge('sp', i)) cycleSkin(selCellId(cur));
         if (Input.edge('confirm', i) && G.sceneT > 8) this.lock(ci);
         else if (Input.edge('back', i) && G.sceneT > 8) {
           if (G.mode === 'cpu' && S.step === 1) { S.step = 0; S.locked[0] = false; Sfx.back(); }
@@ -740,12 +832,12 @@ const SCENES = {
       const diff = G.diff;
       if (G.mode === 'arcade') {
         const others = shuffle(ROSTER.map((c) => c.id).filter((id) => id !== S.choice[0]));
-        G.arcade = { player: S.choice[0], ladder: others.slice(0, 6), idx: 0, continues: 0 };
+        G.arcade = { player: S.choice[0], skin: skinOf(S.choice[0]), ladder: others.slice(0, 6), idx: 0, continues: 0 };
         startArcadeFight();
       } else if (G.mode === 'versus') {
-        G.startMatch(S.choice[0], S.choice[1], ROSTER_BY_ID[S.choice[1]].stage, ['human', 'human']);
+        G.startMatch(S.choice[0], S.choice[1], ROSTER_BY_ID[S.choice[1]].stage, ['human', 'human'], [skinOf(S.choice[0]), skinOf(S.choice[1])]);
       } else {
-        G.startMatch(S.choice[0], S.choice[1], ROSTER_BY_ID[S.choice[1]].stage, ['human', new AI(0.3 + diff * 0.6)]);
+        G.startMatch(S.choice[0], S.choice[1], ROSTER_BY_ID[S.choice[1]].stage, ['human', new AI(0.3 + diff * 0.6)], [skinOf(S.choice[0]), 0]);
       }
     },
     draw(ctx) {
@@ -754,18 +846,18 @@ const SCENES = {
       const title = G.mode === 'cpu' && S.step === 1 ? 'CHOISISSEZ VOTRE ADVERSAIRE' : 'CHOISISSEZ VOTRE POLITICIEN';
       text(ctx, title, W / 2, 48, 54, '#ffe14d', { stroke: '#c8102e', lw: 10 });
       // grille
-      const cw = 118, ch = 132, gx = W / 2 - (cw * 5) / 2, gy = 120;
-      for (const [lbl, row, col] of [['QUÉBEC', 0, '#0a4ea2'], ['OTTAWA', 1, '#c8102e']]) {
+      const cw = 104, ch = 98, gap = 4, gx = W / 2 - (cw * COLS) / 2, gy = 104;
+      for (const [lbl, row, span, col] of [['QUÉBEC', 0, 1, '#0a4ea2'], ['OTTAWA', 1, 1, '#c8102e'], ['HISTOIRE', 2, 2, '#7a5a1e']]) {
         ctx.save();
-        ctx.translate(gx - 16, gy + row * (ch + 10) + ch / 2);
+        ctx.translate(gx - 16, gy + row * (ch + gap) + (span * (ch + gap)) / 2);
         ctx.rotate(-Math.PI / 2);
-        text(ctx, lbl, 0, 0, 26, '#fff', { stroke: col, lw: 7 });
+        text(ctx, lbl, 0, 0, 22, '#fff', { stroke: col, lw: 7 });
         ctx.restore();
       }
-      for (let r = 0; r < 2; r++)
-        for (let c = 0; c < 5; c++) {
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++) {
           const id = GRID[r][c];
-          const x = gx + c * cw, y = gy + r * (ch + 10);
+          const x = gx + c * cw, y = gy + r * (ch + gap);
           const def = ROSTER_BY_ID[id];
           ctx.fillStyle = def ? def.color : '#444';
           ctx.fillRect(x + 4, y + 4, cw - 8, ch - 8);
@@ -779,17 +871,17 @@ const SCENES = {
           ctx.fillStyle = g;
           ctx.fillRect(x, y, cw, ch);
           if (def) {
-            ctx.translate(x + cw / 2 - 6, y + ch / 2 + 6);
-            ctx.scale(1.15, 1.15);
+            ctx.translate(x + cw / 2 - 4, y + ch / 2 + 2);
+            ctx.scale(0.84, 0.84);
             drawHead(ctx, def, 'neutral', G.t + c * 40);
           } else {
-            text(ctx, '?', x + cw / 2, y + ch / 2, 90, '#fff');
+            text(ctx, '?', x + cw / 2, y + ch / 2 - 6, 70, '#fff');
           }
           ctx.restore();
           ctx.strokeStyle = '#141414';
           ctx.lineWidth = 4;
           ctx.strokeRect(x + 4, y + 4, cw - 8, ch - 8);
-          text(ctx, def ? def.short : 'HASARD', x + cw / 2, y + ch - 14, def && def.short.length > 8 ? 17 : 20, '#fff', { lw: 5 });
+          text(ctx, def ? def.short : 'HASARD', x + cw / 2, y + ch - 13, def && def.short.length > 9 ? 13 : def && def.short.length > 7 ? 15 : 18, '#fff', { lw: 4 });
           G.clicks.push({ x, y, w: cw, h: ch, fn: () => {
             const ci = G.mode === 'cpu' ? S.step : S.locked[0] && G.mode === 'versus' ? 1 : 0;
             if (S.locked[ci]) return;
@@ -802,14 +894,14 @@ const SCENES = {
       for (const i of curs) {
         if (G.mode === 'cpu' && i === 1 && S.step === 0) continue;
         const cur = S.cur[i];
-        const x = gx + cur.c * cw, y = gy + cur.r * (ch + 10);
+        const x = gx + cur.c * cw, y = gy + cur.r * (ch + gap);
         const col = i === 0 ? '#3aa0ff' : '#ff4040';
         const pulse = S.locked[i] ? 0 : Math.sin(G.t * 0.3) * 2;
         ctx.strokeStyle = col;
         ctx.lineWidth = 7;
         ctx.strokeRect(x - pulse, y - pulse, cw + pulse * 2, ch + pulse * 2);
         const lbl = i === 0 ? 'J1' : G.mode === 'versus' ? 'J2' : 'CPU';
-        text(ctx, lbl, i === 0 ? x + 20 : x + cw - 20, y + 2, 26, '#fff', { stroke: col, lw: 7 });
+        text(ctx, lbl, i === 0 ? x + 18 : x + cw - 22, y + 4, 22, '#fff', { stroke: col, lw: 7 });
       }
       // panneaux des combattants
       for (const i of [0, 1]) {
@@ -822,8 +914,8 @@ const SCENES = {
           continue;
         }
         const id = S.locked[i] ? S.choice[i] : selCellId(S.cur[i]);
-        const def = ROSTER_BY_ID[id];
-        const px = i === 0 ? 160 : W - 160;
+        const def = ROSTER_BY_ID[id] && applySkin(ROSTER_BY_ID[id], skinOf(id));
+        const px = i === 0 ? 150 : W - 150;
         if (!def) {
           text(ctx, '?', px, 470, 200, '#fff');
           continue;
@@ -831,11 +923,11 @@ const SCENES = {
         ctx.save();
         ctx.translate(px, 640);
         ctx.scale(i === 0 ? 1 : -1, 1);
-        drawCharacter(ctx, def, S.locked[i] ? POSES.win(G.t) : POSES.idle(G.t), S.locked[i] ? 'happy' : 'neutral', G.t, null);
+        drawCharacter(ctx, def, S.locked[i] ? POSES.win(G.t) : POSES.idle(G.t), S.locked[i] ? 'happy' : 'neutral', G.t, S.locked[i] ? def.winProp || null : null);
         ctx.restore();
         const ny = shownTop(i);
-        text(ctx, def.name.toUpperCase(), px, ny, def.name.length > 18 ? 24 : 30, '#fff', { stroke: def.color, lw: 8 });
-        text(ctx, `${def.title} · ${def.party}`, px, ny + 30, 22, '#fff', { font: FONT2, weight: 'bold', lw: 5 });
+        text(ctx, def.name.toUpperCase(), px, ny, def.name.length > 18 ? 20 : 26, '#fff', { stroke: def.color, lw: 7 });
+        text(ctx, def.title, px, ny + 28, 20, '#fff', { font: FONT2, weight: 'bold', lw: 5 });
       }
       // fiche du personnage au centre
       const fi = G.mode === 'cpu' ? S.step : 0;
@@ -843,31 +935,36 @@ const SCENES = {
       shown.forEach((i, k) => {
         const id = S.locked[i] ? S.choice[i] : selCellId(S.cur[i]);
         const def = ROSTER_BY_ID[id];
-        const bw = shown.length === 1 ? 390 : 360;
-        const bx = shown.length === 1 ? W / 2 - 195 : W / 2 - 370 + k * 380, by = 420;
-        ctx.fillStyle = 'rgba(0,0,0,0.65)';
-        roundRect(ctx, bx, by, bw, 200, 14);
+        const bw = shown.length === 1 ? 400 : 330;
+        const bx = shown.length === 1 ? W / 2 - 200 : W / 2 - 338 + k * 346, by = 516;
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        roundRect(ctx, bx, by, bw, 194, 14);
         ctx.fill();
         if (!def) {
           text(ctx, 'HASARD', bx + bw / 2, by + 100, 48, '#fff');
           return;
         }
-        text(ctx, PARTY_NAMES[def.party], bx + bw / 2, by + 26, 22, def.color, { font: FONT2, weight: 'bold', lw: 4, stroke: '#000' });
+        text(ctx, PARTY_NAMES[def.party], bx + bw / 2, by + 20, 19, '#fff', { font: FONT2, weight: 'bold', lw: 5, stroke: def.color });
         const stat = (lbl, v, y) => {
-          text(ctx, lbl, bx + 20, y, 20, '#fff', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
+          text(ctx, lbl, bx + 16, y, 18, '#fff', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
           ctx.fillStyle = '#333';
-          ctx.fillRect(bx + 130, y - 8, bw - 160, 16);
+          ctx.fillRect(bx + 110, y - 6, bw - 130, 12);
           ctx.fillStyle = def.color;
-          ctx.fillRect(bx + 130, y - 8, (bw - 160) * clamp((v - 0.8) / 0.4, 0.1, 1), 16);
+          ctx.fillRect(bx + 110, y - 6, (bw - 130) * clamp((v - 0.8) / 0.4, 0.1, 1), 12);
         };
-        stat('Vitesse', def.spd, by + 62);
-        stat('Puissance', def.pow, by + 92);
-        text(ctx, `Spécial : ${def.special.name}`, bx + 20, by + 130, 20, '#ffe14d', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
-        text(ctx, `Super : ${def.super.name}`, bx + 20, by + 162, 20, '#ff9a9a', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
+        stat('Vitesse', def.spd, by + 46);
+        stat('Puissance', def.pow, by + 68);
+        text(ctx, `Spécial : ${def.special.name}`, bx + 16, by + 94, 18, '#ffe14d', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
+        text(ctx, `Super : ${def.super.name}`, bx + 16, by + 118, 18, '#ff9a9a', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
+        const un = unlockedSkins(id);
+        const key = G.mode === 'versus' ? (i === 0 ? 'H' : '/') : 'H';
+        text(ctx, `Tenue [${key}] : ${SKINS[skinOf(id)].name} (${un.length}/${SKINS.length})`, bx + 16, by + 146, 18, '#9be0ff', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
+        text(ctx, nextSkinHint(id), bx + 16, by + 172, 15, '#ccc', { align: 'left', font: FONT2, lw: 3 });
+        G.clicks.push({ x: bx, y: by, w: bw, h: 194, fn: () => cycleSkin(id) });
       });
       void fi;
-      const hint = G.mode === 'versus' ? 'J1 : WASD + F   ·   J2 : flèches + , (virgule)   ·   Retour : G / .' : 'Flèches ou WASD pour choisir · Entrée pour confirmer · Échap pour revenir';
-      text(ctx, hint, W / 2, 92, 20, '#fff', { font: FONT2, lw: 4 });
+      const hint = G.mode === 'versus' ? 'J1 : WASD + F   ·   J2 : flèches + , (virgule)   ·   Retour : G / .' : 'Flèches ou WASD pour choisir · Entrée pour confirmer · H pour changer de tenue · Échap pour revenir';
+      text(ctx, hint, W / 2, 86, 18, '#fff', { font: FONT2, lw: 4 });
     },
   },
 
@@ -906,7 +1003,7 @@ const SCENES = {
         ctx.restore();
         text(ctx, f.def.name.toUpperCase(), side ? W - 300 : 300, 60, 46, '#fff', { lw: 10 });
         text(ctx, `${f.def.title} · ${PARTY_NAMES[f.def.party]}`, side ? W - 300 : 300, 100, 22, '#fff', { font: FONT2, weight: 'bold', lw: 5 });
-        if (G.sceneT > 40) speech(ctx, side ? W - 330 : 330, 160, f.def.intro, side);
+        if (G.sceneT > 40) speech(ctx, side ? W - 330 : 330, 170, f.introQ, side);
       }
       const s = G.sceneT < 30 ? 260 - G.sceneT * 4 : 140 + Math.sin(G.t * 0.2) * 6;
       text(ctx, 'VS', W / 2, H / 2, s, '#ffe14d', { lw: 16 });
@@ -985,15 +1082,16 @@ const SCENES = {
         ctx.save();
         ctx.translate(W / 2 - 300, 640);
         ctx.scale(1.5, 1.5);
-        drawCharacter(ctx, w.def, POSES.win(G.t), 'happy', G.t, null);
+        drawCharacter(ctx, w.def, POSES.win(G.t), 'happy', G.t, w.def.winProp || null);
         ctx.restore();
         text(ctx, 'VICTOIRE!', W / 2 + 160, 140, 120, '#ffe14d', { stroke: w.def.color, lw: 16 });
         text(ctx, w.def.name.toUpperCase(), W / 2 + 160, 235, 50, '#fff');
-        speech(ctx, W / 2 + 160, 330, w.def.win, 0, 520);
+        speech(ctx, W / 2 + 160, 340, G.winQuote, 0, 560);
         if (G.mode === 'versus') text(ctx, G.matchWinner === 0 ? 'JOUEUR 1 GAGNE' : 'JOUEUR 2 GAGNE', W / 2 + 160, 450, 40, '#fff');
         if (G.mode === 'arcade' && G.matchWinner === 1) text(ctx, 'Vous avez perdu vos élections...', W / 2 + 160, 450, 34, '#ff8080');
       }
-      if (G.sceneT > 60 && Math.floor(G.t / 30) % 2 === 0) text(ctx, 'ENTRÉE POUR CONTINUER', W / 2 + 160, 560, 40, '#fff');
+      drawUnlocks(ctx, W / 2 + 160, 505);
+      if (G.sceneT > 60 && Math.floor(G.t / 30) % 2 === 0) text(ctx, 'ENTRÉE POUR CONTINUER', W / 2 + 160, 600, 40, '#fff');
       G.clicks.push({ x: 0, y: 0, w: W, h: H, fn: () => { if (G.sceneT > 60) this.next(); } });
     },
   },
@@ -1024,12 +1122,12 @@ const SCENES = {
   // ---------- Fin du mode arcade ----------
   ending: {
     update() {
-      if (G.sceneT === 1) Sfx.say('Félicitations! Vous êtes premier ministre de tout!');
+      if (G.sceneT === 1) { Sfx.say('Félicitations! Vous êtes premier ministre de tout!'); G.newUnlocks = recordWin(G.arcade.player, true); }
       if (G.sceneT > 90 && Input.edge('confirm')) { Sfx.confirm(); G.go('title'); }
     },
     draw(ctx) {
       drawSplitBg(ctx, G.t, 0.7);
-      const p = ROSTER_BY_ID[G.arcade.player];
+      const p = applySkin(ROSTER_BY_ID[G.arcade.player], G.arcade.skin || 0);
       // confettis
       for (let i = 0; i < 80; i++) {
         const x = (i * 157 + Math.sin(G.t * 0.03 + i) * 40) % W, y = (i * 71 + G.t * (1 + (i % 4))) % H;
@@ -1039,8 +1137,9 @@ const SCENES = {
       ctx.save();
       ctx.translate(W / 2, 680);
       ctx.scale(1.6, 1.6);
-      drawCharacter(ctx, p, POSES.win(G.t), 'happy', G.t, null);
+      drawCharacter(ctx, p, POSES.win(G.t), 'happy', G.t, p.winProp || null);
       ctx.restore();
+      drawUnlocks(ctx, W / 2 + 360, 420);
       text(ctx, 'FÉLICITATIONS!', W / 2, 90, 100, '#ffe14d', { stroke: '#c8102e', lw: 14 });
       text(ctx, `${p.name.toUpperCase()}`, W / 2, 175, 48, '#fff', { stroke: p.color, lw: 10 });
       text(ctx, 'est maintenant premier ministre du Québec, du Canada', W / 2, 225, 30, '#fff', { font: FONT2, weight: 'bold', lw: 6 });
@@ -1055,7 +1154,7 @@ function startArcadeFight() {
   const A = G.arcade;
   const opp = A.ladder[A.idx];
   const lvl = clamp(0.15 + G.diff * 0.5 + A.idx * 0.12, 0, 2);
-  G.startMatch(A.player, opp, ROSTER_BY_ID[opp].stage, ['human', new AI(lvl)]);
+  G.startMatch(A.player, opp, ROSTER_BY_ID[opp].stage, ['human', new AI(lvl)], [A.skin || 0, 0]);
 }
 
 // ---------- Décors d'interface ----------
@@ -1113,6 +1212,23 @@ function speech(ctx, x, y, str, side, maxW = 480) {
   ctx.fill();
   ctx.stroke();
   lines.forEach((l, i) => text(ctx, l, x, y - bh / 2 + 27 + i * 30, 24, '#141414', { font: FONT2, weight: 'bold', stroke: false }));
+}
+function skinOf(id) {
+  const k = Store.data.skin[id] || 0;
+  return unlockedSkins(id).includes(k) ? k : 0;
+}
+function cycleSkin(id) {
+  if (!ROSTER_BY_ID[id]) return;
+  const un = unlockedSkins(id);
+  Store.data.skin[id] = un[(un.indexOf(skinOf(id)) + 1) % un.length];
+  Store.save();
+  if (un.length > 1) Sfx.select(); else Sfx.back();
+}
+function drawUnlocks(ctx, x, y) {
+  (G.newUnlocks || []).forEach((n, i) => {
+    const s = 30 + Math.sin(G.t * 0.2) * 2;
+    text(ctx, `★ NOUVELLE TENUE : ${n.toUpperCase()} ★`, x, y + i * 40, s, '#9be0ff', { stroke: '#0a4ea2', lw: 8 });
+  });
 }
 function shownTop() {
   return 664;

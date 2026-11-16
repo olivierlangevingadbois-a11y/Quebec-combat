@@ -34,7 +34,11 @@ class AI {
 
     if (free && this.planT <= 0) {
       const r = Math.random();
-      if (me.meter >= 100 && r < 0.02 + 0.03 * L && this.superFits(me, dist)) this.plan = 'super';
+      const it = G.items && G.items.find((i) => i.y > GROUND - 60);
+      if (it && Math.random() < 0.3 + 0.15 * L && Math.abs(it.x - me.x) < Math.abs(it.x - opp.x) + 150) {
+        this.plan = 'getitem';
+        this.itemX = it.x;
+      } else if (me.meter >= 100 && r < 0.02 + 0.03 * L && this.superFits(me, dist)) this.plan = 'super';
       else if (dist > 380) this.plan = r < 0.015 + 0.02 * L && this.isRanged(me) ? 'special' : r < 0.85 ? 'approach' : 'wait';
       else if (dist > 150) {
         if (r < 0.1 + 0.05 * L) this.plan = 'jumpin';
@@ -49,11 +53,12 @@ class AI {
         else if (r < 0.86) this.plan = 'retreat';
         else this.plan = 'wait';
       }
-      this.planT = this.plan === 'approach' || this.plan === 'retreat' ? 20 + Math.random() * 30 : this.plan === 'wait' ? 10 + Math.random() * (30 - L * 10) : 4;
+      this.planT = this.plan === 'getitem' ? 45 : this.plan === 'approach' || this.plan === 'retreat' ? 20 + Math.random() * 30 : this.plan === 'wait' ? 10 + Math.random() * (30 - L * 10) : 4;
     }
 
     switch (this.plan) {
       case 'approach': o[toward] = true; break;
+      case 'getitem': if (Math.abs(this.itemX - me.x) > 20) o[this.itemX > me.x ? 'right' : 'left'] = true; else this.planT = 0; break;
       case 'retreat': o[away] = true; break;
       case 'guard': o[away] = true; o.down = !!this.guardLow; break;
       case 'jumpover': o.up = true; o[toward] = true; break;

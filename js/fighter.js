@@ -50,8 +50,9 @@ const FS = 1.15; // échelle d'affichage des combattants
 const SP_POSE = { projectile: 'throw', wave: 'throw', rain: 'win', drop: 'win', beam: 'throw', dash: 'dash', rising: 'rising' };
 
 class Fighter {
-  constructor(def, side) {
-    this.def = def;
+  constructor(def, side, skin = 0) {
+    this.def = applySkin(def, skin);
+    this.introQ = pick(def.intro);
     this.side = side;
     this.maxHp = 1000;
     this.meter = 0;
@@ -78,6 +79,8 @@ class Fighter {
     this.airAtkUsed = false;
     this.blockLow = false;
     this.flash = 0;
+    this.slow = 0;
+    this.boost = 0;
   }
   get airborne() { return this.y < GROUND - 0.5; }
   setState(s) { this.state = s; this.t = 0; }
@@ -106,7 +109,7 @@ class Fighter {
 
   startSpecial(isSuper, G, inp) {
     const s = isSuper ? this.def.super : this.def.special;
-    if (!isSuper && (s.type === 'projectile' || s.type === 'wave') && G.projectiles.some((p) => p.owner === this && !p.isSuper)) return false;
+    if (!isSuper && (s.type === 'projectile' || s.type === 'wave') && G.projectiles.some((p) => p.owner === this && !p.isSuper && !p.item)) return false;
     inp.consume('sp');
     this.sp = { s, t: 0, isSuper, hits: 0, hitCD: 0, startup: isSuper ? 8 : 12 };
     this.state = 'special';
@@ -130,7 +133,9 @@ class Fighter {
     if (this.inv > 0) this.inv--;
     if (this.flash > 0) this.flash--;
     this.dispHp = Math.max(this.hp, this.dispHp - 6);
-    const S = this.def.spd;
+    if (this.slow > 0) this.slow--;
+    if (this.boost > 0) this.boost--;
+    const S = this.def.spd * (this.slow > 0 ? 0.5 : 1);
 
     const free = this.state === 'idle' || this.state === 'walk' || this.state === 'crouch';
     if (free) {
@@ -389,14 +394,26 @@ class Fighter {
       if (this.state === 'knock') ctx.rotate(-0.4);
     }
     if (this.inv > 0 && this.state !== 'special' && G.t % 4 < 2) ctx.globalAlpha = 0.6;
+    if (this.state === 'special' && this.sp && this.sp.s.spin && this.sp.t >= this.sp.startup) ctx.scale(Math.cos(this.sp.t * 0.9), 1);
+    if (this.boost > 0) {
+      ctx.shadowColor = '#ffe14d';
+      ctx.shadowBlur = 18 + Math.sin(G.t * 0.3) * 8;
+    }
     if (this.state === 'special' && this.sp && this.sp.isSuper) {
       ctx.shadowColor = this.def.color;
       ctx.shadowBlur = 25;
     }
     if (this.flash > 0) ctx.filter = `brightness(${1 + this.flash * 0.12})`;
-    drawCharacter(ctx, this.def, this.pose(), this.expr(), G.t, this.prop);
+    drawCharacter(ctx, this.def, this.pose(), this.expr(), G.t, this.state === 'win' ? this.def.winProp || null : this.prop);
     ctx.filter = 'none';
     ctx.restore();
+    if (this.slow > 0 && this.state !== 'ko' && this.state !== 'down') {
+      // flaque de sirop
+      ctx.fillStyle = 'rgba(176,98,20,0.8)';
+      ellipse(ctx, this.x, GROUND + 4, 58, 10);
+      ctx.fill();
+      text(ctx, 'COLLÉ!', this.x, this.y - 300, 22, '#ffb347');
+    }
   }
 }
 
@@ -425,6 +442,12 @@ class Projectile {
     if (this.hitCD > 0) this.hitCD--;
     if (--this.life <= 0) this.dead = true;
     if (this.x < -320 || this.x > W + 320) this.dead = true;
+    if (this.bounce && this.vy > 0 && this.y + this.hh / 2 >= GROUND) {
+      this.y = GROUND - this.hh / 2;
+      this.vy = -Math.abs(this.vy) * 0.8 - 1;
+      Sfx.land();
+      if (--this.bounce <= 0) this.dead = true;
+    }
     if (this.ground && this.y + this.hh / 2 >= GROUND + 4) {
       this.dead = true;
       G.impact(this);
