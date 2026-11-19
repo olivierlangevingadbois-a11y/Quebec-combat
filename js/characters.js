@@ -11,8 +11,10 @@ const ROSTER = [
     spd: 0.95, pow: 1.06, stage: 'salonbleu',
     special: { name: 'Le 3e lien!', type: 'wave', kind: 'tunnel', dmg: 70, speed: 7.5 },
     super: { name: 'Méga-batterie!', type: 'projectile', kind: 'battery', dmg: 250, hits: 3, speed: 8.5 },
-    intro: ["Ça va bien aller. Pas pour toi, par exemple.", "Je suis comptable : tu vas finir dans le rouge.", "Le 3e lien? Oui. Non. Oui. Tiens, une claque."],
-    win: ["7 millions pour les Kings... pis une volée gratis pour toi.", "Le 3e lien, c'est réglé : mon poing, ta face.", "On va continuer! ...Toi, non.", "Colonne des revenus : moi. Colonne des dépenses : tes dents."],
+    intro: ["Écoutez. Ça va bien aller. Pour moi.", "Fiez-vous à moi, je suis comptable. Pis toi, t'es une dépense.", "Le 3e lien? Oui. Non. Peut-être. Mais la claque, elle, c'est sûr."],
+
+    win: ["Je l'ai dit, je le répète : on est une nation. Toi, t'es un K.O.", "7 millions pour les Kings. La volée, elle, était gratuite.", "C'est majeur. C'est historique. Pis t'es à terre.", "Colonne des revenus : moi. Colonne des dépenses : tes dents."],
+
   },
   {
     id: 'pspp', name: 'Paul St-Pierre Plamondon', short: 'PSPP', party: 'PQ', level: 'QC', num: 95,
@@ -21,8 +23,10 @@ const ROSTER = [
     spd: 1.05, pow: 1.0, stage: 'vieuxquebec',
     special: { name: 'Bulletin du OUI!', type: 'projectile', kind: 'ballot', dmg: 65, speed: 10.5 },
     super: { name: 'Pays!', type: 'rain', kind: 'fleur', dmg: 270, count: 9 },
-    intro: ["Je prête pas serment au roi. Mais je te jure une volée.", "La question est claire : veux-tu une claque, OUI ou OUI?", "Ce combat, c'est un mandat clair."],
-    win: ["50 % plus un... coup de poing.", "Le roi Charles peut ben aller se coucher. Toi, c'est fait.", "Référendum gagnant : 100 % de OUI, t'es à terre.", "À la prochaine fois? Non non. C'est CETTE fois-ci."],
+    intro: ["Soyons clairs : je ne prêterai pas serment au roi. Ni à toi.", "Un référendum dans un premier mandat. Une claque dans la première seconde.", "Le régime fédéral est brisé. Ta mâchoire aussi, bientôt."],
+
+    win: ["50 % plus un... coup de poing.", "Le roi Charles peut aller se coucher. Toi, c'est déjà fait.", "La question était claire. La réponse aussi : OUI.", "Pas à la prochaine fois. C'est CETTE fois-ci."],
+
   },
   {
     id: 'ghazal', name: 'Ruba Ghazal', short: 'GHAZAL', party: 'QS', level: 'QC', num: 99,
@@ -31,8 +35,10 @@ const ROSTER = [
     spd: 1.12, pow: 0.95, stage: 'pontjc',
     special: { name: 'Pancarte!', type: 'dash', prop: 'sign', dmg: 85, speed: 13, dur: 16 },
     super: { name: 'Grève générale!', type: 'wave', kind: 'signs', dmg: 250, hits: 5, speed: 6.5 },
-    intro: ["On taxe les ultra-riches. Pis on tape les autres.", "Co-porte-parole? Co-knock-out.", "So-so-so... solide droite!"],
-    win: ["Ça, c'est de la redistribution de claques.", "Solidaire, oui. Avec ta mâchoire, non.", "Le 1 % le plus magané, c'est toi.", "Mon loyer monte, toi tu descends."],
+    intro: ["Le monde ordinaire est écoeuré. Moi aussi.", "On va taxer les ultra-riches. Pis te taper, toi.", "Crise du logement? Tu vas loger au plancher."],
+
+    win: ["Ça, c'est de la redistribution. De claques.", "Le 1 % le plus magané, c'est toi.", "Mon loyer monte. Toi, tu descends.", "Solidaire avec tout le monde. Sauf ta mâchoire."],
+
   },
   {
     id: 'duhaime', name: 'Éric Duhaime', short: 'DUHAIME', party: 'PCQ', level: 'QC', num: 0,
@@ -41,8 +47,10 @@ const ROSTER = [
     spd: 1.0, pow: 1.05, stage: 'pontjc',
     special: { name: 'En ondes!', type: 'projectile', kind: 'radio', dmg: 64, hits: 2, speed: 8.5, prop: 'mic' },
     super: { name: 'LIBERTÉ!', type: 'dash', prop: 'mic', dmg: 240, hits: 4, speed: 16, dur: 28 },
-    intro: ["On ouvre les lignes... pis ta lèvre.", "En ondes dans 3, 2, 1... PAF.", "Zéro siège, mais deux poings."],
-    win: ["T'es en ondes. Pis t'es K.O.", "Libârté! Surtout celle de te sacrer une volée.", "Ligne 1, t'es là? ...Ligne 1? Y répond pu.", "C'est ça qui est ça, mon chum."],
+    intro: ["Bonjour, bonjour! On ouvre les lignes. Pis ta lèvre.", "Les gens sont tannés. Moi le premier.", "En ondes dans 3, 2, 1..."],
+
+    win: ["Libârté! Surtout celle de te sacrer une volée.", "On s'entend-tu que ça avait aucun bon sens?", "Ligne 1, t'es là? ...Ligne 1? Y répond pus.", "Petite pause publicitaire. Toi, une pause tout court."],
+
   },
   // ===== Ottawa =====
   {
@@ -52,8 +60,10 @@ const ROSTER = [
     spd: 0.95, pow: 1.08, stage: 'communes',
     special: { name: 'Taux directeur!', type: 'projectile', kind: 'rate', dmg: 70, speed: 9.5 },
     super: { name: 'Coudes levés!', type: 'dash', prop: 'elbow', dmg: 260, hits: 3, speed: 18, dur: 24 },
-    intro: ["Coudes levés, mon chum.", "J'ai géré deux banques centrales. Toi, t'es un p'tit déficit.", "J'ai un plan. Il a des graphiques. Pis un crochet."],
-    win: ["Ton taux de survie vient de baisser de 100 points de base.", "Coudes levés, taux baissés, adversaire couché.", "Ça, c'est un resserrement quantitatif de ta face.", "Marché baissier : toi."],
+    intro: ["Coudes levés. Elbows up.", "Je suis très, très sérieux. Et très, très fâché.", "J'ai géré deux banques centrales. Toi, t'es un petit déficit."],
+
+    win: ["Ton taux de survie vient de baisser de 100 points de base.", "Canada strong. Toi, pas mal moins.", "C'est un moment de rupture. Ta mâchoire aussi.", "Je l'avais prévu. Dans un tableur."],
+
   },
   {
     id: 'poilievre', name: 'Pierre Poilievre', short: 'POILIEVRE', party: 'PCC', level: 'CA', num: 7,
@@ -62,8 +72,10 @@ const ROSTER = [
     spd: 1.08, pow: 1.0, stage: 'colline',
     special: { name: 'Hache la taxe!', type: 'projectile', kind: 'axe', dmg: 75, speed: 11 },
     super: { name: 'AXE THE TAX!', type: 'projectile', kind: 'bigaxe', dmg: 260, hits: 4, speed: 10 },
-    intro: ["Gros bon sens : je frappe, tu tombes.", "Tout est brisé. Ta garde aussi.", "Verbe, nom, claque."],
-    win: ["*croque dans sa pomme* ...Pis? C'était quoi ta question?", "Hache la taxe. Hache la face.", "Ramenons le gros bon sens : reste couché.", "*crounch* Qui ça? Quelle page? Quelle ligne?"],
+    intro: ["Tout est brisé. Ta garde aussi.", "Gros bon sens : je frappe, tu tombes.", "Abolir la taxe, bâtir des maisons, stopper le crime. Pis te varger."],
+
+    win: ["*croque dans sa pomme* Pis? C'était quoi ta question?", "Hache la taxe. Hache ta face.", "Ramenons le gros bon sens chez nous. Reste couché.", "Ça, c'est radical. Radicalement K.O."],
+
   },
   {
     id: 'blanchet', name: 'Yves-François Blanchet', short: 'BLANCHET', party: 'BQ', level: 'CA', qc: true, num: 78,
@@ -72,8 +84,10 @@ const ROSTER = [
     spd: 0.9, pow: 1.12, stage: 'communes',
     special: { name: 'Fleur de lys!', type: 'projectile', kind: 'fleur', dmg: 70, speed: 9.5 },
     super: { name: 'LE BLOC!', type: 'drop', kind: 'bloc', dmg: 280 },
-    intro: ["Je suis ici pour bloquer. Tout. Même toi.", "Le Bloc bloque. C'est dans le nom.", "Ottawa, c'est pas mon pays. Mais c'est mon ring."],
-    win: ["Le Québec a parlé. Toi, tu parles pu.", "Bloqué, barré, couché.", "Je négocie pas. Je bloque.", "Un artificiel de moins."],
+    intro: ["Monsieur le Président, le Bloc votera contre toi.", "Ottawa n'a pas d'affaire dans ma face.", "Je suis ici pour bloquer. C'est littéralement dans le nom."],
+
+    win: ["Le Québec a parlé. Toi, tu parles pus.", "Bloqué, barré, couché. Dans cet ordre-là.", "Dans le respect des compétences du Québec. T'en avais pas.", "Je négocie pas. Je bloque."],
+
   },
   {
     id: 'singh', name: 'Jagmeet Singh', short: 'SINGH', party: 'NPD', level: 'CA', num: 12,
@@ -82,8 +96,10 @@ const ROSTER = [
     spd: 1.15, pow: 0.95, stage: 'colline',
     special: { name: 'Genou volant!', type: 'rising', dmg: 95 },
     super: { name: 'Assurance dentaire!', type: 'projectile', kind: 'tooth', dmg: 250, hits: 3, speed: 9 },
-    intro: ["J'ai déchiré l'entente. T'es le prochain.", "Un peu de jiu-jitsu parlementaire?", "Les ultra-riches vont payer. Toi aussi."],
-    win: ["Ton K.O. est couvert par l'assurance dentaire.", "Les gens ordinaires gagnent. Toi, t'es extraordinairement couché.", "Ceinture noire. Œil au beurre noir. Coïncidence?", "Ça, ça s'en va direct sur TikTok."],
+    intro: ["Les PDG ont assez gagné. À mon tour.", "Un peu de jiu-jitsu parlementaire?", "Je me bats pour vous. Pis contre toi."],
+
+    win: ["Ton K.O. est couvert par l'assurance dentaire.", "Les gens ordinaires gagnent. Toi, t'es extraordinairement couché.", "Ceinture noire. Oeil au beurre noir. Coïncidence?", "Ça s'en va direct sur TikTok."],
+
   },
   {
     id: 'trudeau', name: 'Justin Trudeau', short: 'TRUDEAU', party: 'PLC', level: 'CA', num: 15,
@@ -92,8 +108,10 @@ const ROSTER = [
     spd: 1.1, pow: 0.95, stage: 'colline',
     special: { name: 'Bas colorés!', type: 'projectile', kind: 'sock', dmg: 60, speed: 11.5 },
     super: { name: 'Voies ensoleillées!', type: 'beam', kind: 'sun', dmg: 270, hits: 6, dur: 54 },
-    intro: ["Laisse-moi être très clair : euh... tu vas en manger une.", "Parce qu'on est en 2026.", "Check mes bas. Dernière chose que tu vas voir."],
-    win: ["Je bois dans des... genres de boîtes à boire en carton. Toi, tu bois la tasse.", "Le budget va s'équilibrer tout seul. Ta mâchoire, non.", "Coudegate 2 : le retour.", "Des voies ensoleillées. Pour moi."],
+    intro: ["Laissez-moi être très clair. Euh... très clair.", "Parce qu'on est en 2026.", "Regarde mes bas. C'est la dernière chose que tu vas voir."],
+
+    win: ["Le budget va s'équilibrer de lui-même. Ta mâchoire, non.", "Des voies ensoleillées, mes amis. Pour moi.", "Je bois dans des... genres de boîtes à boire en carton. Toi, tu bois la tasse.", "Un Canada fort. Pis toi... euh... faible."],
+
   },
   // ===== Histoire =====
   {
@@ -103,8 +121,10 @@ const ROSTER = [
     spd: 0.92, pow: 1.1, stage: 'colline',
     special: { name: 'Une p\'tite shot!', type: 'projectile', kind: 'bottle', dmg: 68, speed: 10.5 },
     super: { name: 'Canadien Pacifique!', type: 'wave', kind: 'train', dmg: 270, hits: 4, speed: 11 },
-    intro: ["Un Dominion d'un océan à l'autre. Une claque d'une oreille à l'autre.", "J'ai fondé le pays avant mon premier café. Façon de parler.", "1867, mon jeune. Tu connais?"],
-    win: ["Mieux vaut Macdonald pompette que toi à jeun.", "Le dernier crampon, c'était toi.", "Tchou-tchou, mon grand.", "A mari usque ad plancher."],
+    intro: ["Une nation d'un océan à l'autre. Une claque d'une oreille à l'autre.", "Soyons Anglais ou Français, mais surtout... dans ta face.", "1867, mon jeune. Tu connais?"],
+
+    win: ["Mieux vaut Macdonald pompette que toi à jeun.", "Le dernier crampon du chemin de fer, c'était toi.", "Tchou-tchou, mon grand.", "J'ai bâti un pays avant le dîner. Toi, t'as même pas bâti une garde."],
+
   },
   {
     id: 'riel', name: 'Louis Riel', short: 'RIEL', party: 'MÉTIS', level: 'HI', num: 70,
@@ -113,8 +133,10 @@ const ROSTER = [
     spd: 1.08, pow: 1.02, stage: 'plaines',
     special: { name: 'Ceinture fléchée!', type: 'dash', prop: 'sash', dmg: 85, speed: 13, dur: 16 },
     super: { name: 'Chasse au bison!', type: 'wave', kind: 'bison', dmg: 260, hits: 4, speed: 9.5 },
-    intro: ["Élu trois fois, jamais assis. Aujourd'hui, c'est toi qui t'assois.", "La Rivière-Rouge te salue.", "Gouvernement provisoire. Claque permanente."],
-    win: ["Mon peuple dormira cent ans. Toi, dix secondes, ça va suffire.", "Le Manitoba, c'est moi. Le plancher, c'est toi.", "L'histoire m'a donné raison. Encore.", "Les Prairies ont voté."],
+    intro: ["Je suis le fondateur du Manitoba. Pis de ta défaite.", "La Rivière-Rouge te salue.", "Élu trois fois, jamais assis. Aujourd'hui, c'est toi qui t'assois."],
+
+    win: ["Mon peuple dormira cent ans. Toi, dix secondes, ça va suffire.", "Quand mon peuple se réveillera, les artistes raconteront ta défaite.", "L'histoire m'a donné raison. Encore.", "Les Prairies ont voté."],
+
   },
   {
     id: 'baldwin', name: 'Robert Baldwin', short: 'BALDWIN', party: 'RÉF', level: 'HI', num: 48,
@@ -124,7 +146,9 @@ const ROSTER = [
     special: { name: 'Motion de censure!', type: 'projectile', kind: 'scroll', dmg: 66, speed: 10 },
     super: { name: 'LaFontaine, à moi!', type: 'wave', kind: 'lafontaine', dmg: 255, hits: 4, speed: 10 },
     intro: ["Un gouvernement responsable... de ta défaite.", "LaFontaine pis moi, on est un duo. Toi, t'es tout seul.", "Je propose une motion : toi, par terre."],
-    win: ["Motion adoptée à l'unanimité.", "1848 : gouvernement responsable. Aujourd'hui : adversaire irresponsable.", "Baldwin-LaFontaine : le premier « tag team » du pays.", "La Chambre a tranché."],
+
+    win: ["Motion adoptée à l'unanimité.", "1848 : gouvernement responsable. Aujourd'hui : adversaire irresponsable.", "Baldwin-LaFontaine : le premier tag team du pays.", "La Chambre a tranché."],
+
   },
   {
     id: 'papineau', name: 'Louis-Joseph Papineau', short: 'PAPINEAU', party: 'PATRIOTE', level: 'HI', qc: true, num: 37,
@@ -133,8 +157,10 @@ const ROSTER = [
     spd: 1.0, pow: 1.05, stage: 'plaines',
     special: { name: '92 Résolutions!', type: 'projectile', kind: 'scroll', dmg: 64, hits: 2, speed: 9 },
     super: { name: 'La tête à Papineau!', type: 'drop', kind: 'bighead', dmg: 280 },
-    intro: ["Ça prend pas la tête à Papineau pour savoir qui va gagner.", "J'ai 92 résolutions. La première : te planter.", "Patriote un jour, patriote dans ta face."],
+    intro: ["Le peuple est la seule source légitime du pouvoir. Pis des claques.", "Ça prend pas la tête à Papineau pour savoir qui va gagner.", "J'ai 92 résolutions. La première : te planter."],
+
     win: ["92 résolutions. La 93e : reste couché.", "Ça prenait la tête à Papineau. Tu l'avais pas.", "Vive la liberté, vive l'uppercut!", "1837, c'était juste l'échauffement."],
+
   },
   {
     id: 'laurier', name: 'Wilfrid Laurier', short: 'LAURIER', party: 'PLC', level: 'HI', num: 5,
@@ -143,8 +169,10 @@ const ROSTER = [
     spd: 1.02, pow: 1.0, stage: 'colline',
     special: { name: 'Sunny ways 1895!', type: 'projectile', kind: 'sunny', dmg: 66, speed: 10 },
     super: { name: 'Le XXe siècle!', type: 'drop', kind: 'century', dmg: 275 },
-    intro: ["Les voies ensoleillées, c'est MOI. Le petit Trudeau a copié.", "Je suis sur ton billet de 5 $. Montre du respect.", "Faisons un compromis : tu perds."],
-    win: ["Le XXe siècle appartient au Canada. Ce combat-là, à moi.", "Un compromis honorable : moi debout, toi couché.", "Rends-moi mon 5 piasses.", "Suivez mon panache blanc... jusqu'au tapis."],
+    intro: ["Le XXe siècle appartient au Canada. Ce combat-là, à moi.", "Les voies ensoleillées, c'est MOI. Le petit Trudeau a copié.", "Je suis sur ton billet de 5 piastres. Un peu de respect."],
+
+    win: ["Suivez mon panache blanc... jusqu'au tapis.", "Un compromis honorable : moi debout, toi couché.", "Rends-moi mon 5 piastres.", "Canadien français. Canadien d'abord. Champion ensuite."],
+
   },
   {
     id: 'duplessis', name: 'Maurice Duplessis', short: 'DUPLESSIS', party: 'UN', level: 'HI', qc: true, num: 36,
@@ -153,8 +181,10 @@ const ROSTER = [
     spd: 0.9, pow: 1.14, stage: 'salonbleu',
     special: { name: 'Loi du cadenas!', type: 'projectile', kind: 'padlock', dmg: 72, speed: 9 },
     super: { name: 'Grande Noirceur!', type: 'beam', kind: 'dark', dmg: 265, hits: 6, dur: 54 },
-    intro: ["Le ciel est bleu, l'enfer est rouge... pis ton œil va être noir.", "Toé, tais-toé!", "Un bon frigidaire pour ton comté si tu te couches tout de suite."],
-    win: ["Les évêques mangent dans ma main. Toi, tu manges le plancher.", "Cadenassé.", "Le Cheuf a parlé.", "Tu voulais un pont? T'auras rien pantoute."],
+    intro: ["Le ciel est bleu, l'enfer est rouge... pis ton oeil va être noir.", "Toé, tais-toé!", "Un beau pont pour ton comté si tu te couches tout de suite."],
+
+    win: ["Les évêques mangent dans ma main. Toi, tu manges le plancher.", "Cadenassé.", "Le Cheuf a parlé.", "Vote du bon bord, la prochaine fois."],
+
   },
   {
     id: 'levesque', name: 'René Lévesque', short: 'LÉVESQUE', party: 'PQ', level: 'HI', qc: true, num: 76,
@@ -163,8 +193,10 @@ const ROSTER = [
     spd: 1.08, pow: 0.98, stage: 'salonbleu',
     special: { name: 'Boucane!', type: 'projectile', kind: 'smoke', dmg: 62, hits: 2, speed: 8 },
     super: { name: 'Maîtres chez nous!', type: 'beam', kind: 'bolt', dmg: 270, hits: 6, dur: 54 },
-    intro: ["Si je vous ai bien compris... vous voulez une claque.", "On est pas un p'tit peuple. Toi, par contre...", "Attends, j'finis ma cigarette. ...Bon. Viens-t'en."],
-    win: ["À la prochaine fois!", "Si je vous ai bien compris, vous êtes en train de dire : ayoye.", "Quelque chose comme un grand K.O.", "Nationalisé."],
+    intro: ["On n'est pas un petit peuple. Toi, par contre...", "Attends, j'finis ma cigarette. ...Bon. Viens-t'en.", "Maîtres chez nous. Pis chez vous aussi."],
+
+    win: ["Si je vous ai bien compris, vous êtes en train de me dire : à la prochaine fois.", "Quelque chose comme un grand K.O.", "Nationalisé.", "Une autre cigarette, pis on recommence?"],
+
   },
   {
     id: 'pet', name: 'Pierre Elliott Trudeau', short: 'P.E. TRUDEAU', party: 'PLC', level: 'HI', num: 68,
@@ -173,8 +205,10 @@ const ROSTER = [
     spd: 1.12, pow: 0.97, stage: 'communes',
     special: { name: 'Pirouette!', type: 'dash', spin: true, dmg: 82, speed: 12, dur: 16 },
     super: { name: 'Just watch me!', type: 'dash', dmg: 250, hits: 5, speed: 17, dur: 26 },
-    intro: ["Just watch me.", "La raison avant la passion. Mon poing avant ta face.", "Jusqu'où j'irais? Regarde-moi ben aller."],
-    win: ["Fuddle duddle.", "*pirouette derrière ton dos*", "Finies les folies.", "Bienvenue dans les années 80."],
+    intro: ["Just watch me.", "L'État n'a pas d'affaire dans les chambres à coucher. Moi, j'ai affaire dans ta face.", "La raison avant la passion. Mon poing avant ta face."],
+
+    win: ["Fuddle duddle.", "*pirouette derrière ton dos* Hop.", "Bienvenue au Canada bilingue : ayoye, ouch.", "Qu'ils mangent de la... poussière."],
+
   },
   {
     id: 'chretien', name: 'Jean Chrétien', short: 'CHRÉTIEN', party: 'PLC', level: 'HI', num: 93,
@@ -183,8 +217,10 @@ const ROSTER = [
     spd: 1.0, pow: 1.08, stage: 'communes',
     special: { name: 'Poivre!', type: 'projectile', kind: 'pepper', dmg: 66, speed: 10.5 },
     super: { name: 'Poignée de Shawinigan!', type: 'dash', prop: 'choke', dmg: 265, hits: 3, speed: 18, dur: 24 },
-    intro: ["Le poivre? Moi, j'le mets dans mon assiette. Toi, j'te mets à terre.", "Le p'tit gars de Shawinigan a un message pour toi.", "Que c'est qu'tu fais dans mon chemin?"],
-    win: ["Une preuve, c'est une preuve. Pis quand t'as une bonne preuve, c'est parce qu'elle est prouvée.", "Poignée de main de Shawinigan. Service compris.", "Le plusse meilleur pays au monde!", "Y'était dans mon chemin."],
+    intro: ["Le p'tit gars de Shawinigan a un message pour toi.", "Le poivre? Moi, j'le mets dans mon assiette.", "Que c'est qu'tu fais dans mon chemin, toé?"],
+
+    win: ["Une preuve, c'est une preuve. Pis quand t'as une bonne preuve, c'est parce qu'elle est prouvée.", "Poignée de main de Shawinigan. Service compris.", "Le plusse meilleur pays au monde!", "J'étais pas dans ton chemin. T'étais dans le mien."],
+
   },
   {
     id: 'casgrain', name: 'Thérèse Casgrain', short: 'CASGRAIN', party: 'PSD', level: 'HI', qc: true, num: 40,
@@ -193,8 +229,10 @@ const ROSTER = [
     spd: 1.1, pow: 0.96, stage: 'plaines',
     special: { name: 'Droit de vote!', type: 'projectile', kind: 'vote', dmg: 64, speed: 11 },
     super: { name: 'Suffrage universel!', type: 'rain', kind: 'vote', dmg: 270, count: 9 },
-    intro: ["Le droit de vote, on l'a arraché. Ta dent aussi, ça s'en vient.", "Quatorze ans à cogner à la porte du Parlement. Je cogne fort.", "Ces messieurs ont dit non. Regarde-les aujourd'hui."],
-    win: ["1940 : les femmes votent. Résultat unanime : t'es K.O.", "On ne naît pas championne, on le devient.", "Retourne à tes chaudrons, mon grand.", "Le vote est secret. La claque, non."],
+    intro: ["Quatorze ans à cogner à la porte du Parlement. Je cogne fort.", "Ces messieurs ont dit non. Regarde-les aujourd'hui.", "Le droit de vote, on l'a arraché. Ta dent aussi, ça s'en vient."],
+
+    win: ["1940 : les femmes votent. Résultat unanime : t'es K.O.", "On ne naît pas championne. On le devient.", "Retourne à tes chaudrons, mon grand.", "Le vote est secret. La claque, non."],
+
   },
 ];
 const ROSTER_BY_ID = Object.fromEntries(ROSTER.map((c) => [c.id, c]));

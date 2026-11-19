@@ -81,6 +81,26 @@ Items parachute into the arena during fights; walk over one to use it. Turn them
 | Insuline de Banting | Remplit la jauge de SUPER |
 | Coupe Stanley | Puissance augmentée quelques secondes |
 
+## Voix
+
+Every fighter speaks: intro line on the VS screen, special and super callouts, victory line, plus an arena announcer
+("Ronde un!", "Combattez!", "K.O.!", names...). The lines are pre-recorded MP3 files in `audio/voix/` (~4.5 MB),
+generated offline for free with [Piper](https://github.com/rhasspy/piper), an open-source neural text-to-speech engine.
+Each character gets its own voice setting (pitch, speed) and sound treatment: AM radio for Duplessis, talk-radio for
+Duhaime, 1970s TV for Lévesque, P.E. Trudeau and Chrétien, wax-cylinder crackle for the 19th-century figures, and an
+echoing ghost voice for Riel's *Revenant* outfit. Voices can be turned off in the menu (**VOIX : NON**).
+Voice credits and licences: `audio/voix/CREDITS.md`.
+
+To regenerate after editing lines in `js/characters.js`:
+
+```bash
+pip install piper-tts                      # plus ffmpeg with libmp3lame
+# download the fr_FR tom/upmc/gilles/siwis voices (.onnx + .onnx.json) from
+# https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR into ./voices
+python3 tools/gen_voices.py ./voices            # everything
+python3 tools/gen_voices.py ./voices legault    # one character
+```
+
 ## Modes
 
 - **Arcade**: beat 6 opponents in a row (difficulty ramps up), with continues.
@@ -113,7 +133,8 @@ Gamepads: A = punch, B = kick, X/Y = special, Start = pause. On touch screens, o
 index.html        page + touch controls
 css/style.css
 js/util.js        constants, drawing helpers (fleur-de-lys, maple leaf, flags)
-js/audio.js       synthesized sound effects, chiptune music, fr-CA announcer (speechSynthesis)
+js/audio.js       synthesized sound effects, chiptune music
+js/voice.js       plays the pre-recorded voice lines (falls back to the browser's speech synthesis)
 js/input.js       keyboard / gamepad / touch
 js/store.js       saved progress + unlockable outfits
 js/characters.js  roster, quotes, caricature drawing, projectiles
@@ -122,6 +143,8 @@ js/stages.js      the six arenas
 js/fighter.js     poses (2-bone IK), frame data, fighter state machine
 js/ai.js          CPU opponent
 js/game.js        combat rules, HUD, scenes (title, menu, select, VS, fight, results)
+tools/            gen_voices.py + dump_lines.js: voice line generator
+audio/voix/       generated voice lines (one folder per character + annonceur)
 ```
 
 To add a fighter: add an entry to `ROSTER` in `js/characters.js` (colours, hair style, quotes, special and super) and place it in

@@ -82,6 +82,7 @@ function applySkin(def, idx) {
     d.look = Object.assign({}, L, over);
     d.skinIdx = idx;
     d.color = '#5fd38a';
+    d.voice = 'riel-revenant';
     d.title = 'Le Revenant';
     d.intro = [
       "Mon peuple dormira cent ans. Moi, j'ai mis mon cadran.",

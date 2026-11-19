@@ -52,7 +52,8 @@ const SP_POSE = { projectile: 'throw', wave: 'throw', rain: 'win', drop: 'win', 
 class Fighter {
   constructor(def, side, skin = 0) {
     this.def = applySkin(def, skin);
-    this.introQ = pick(this.def.intro);
+    this.introIdx = Math.floor(Math.random() * this.def.intro.length);
+    this.introQ = this.def.intro[this.introIdx];
     this.side = side;
     this.maxHp = 1000;
     this.meter = 0;

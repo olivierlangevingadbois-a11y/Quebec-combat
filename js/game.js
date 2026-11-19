@@ -69,8 +69,8 @@ const G = {
     this.phaseT++;
     const [a, b] = this.fighters;
     if (this.phase === 'intro') {
-      if (this.phaseT === 1) Sfx.say(this.round === 3 ? 'Ronde finale!' : `Ronde ${this.round}!`);
-      if (this.phaseT === 70) Sfx.say('Combattez!');
+      if (this.phaseT === 1) Voice.ann(this.round >= 3 ? 'final' : `round${this.round}`, this.round >= 3 ? 'Ronde finale!' : `Ronde ${this.round}!`);
+      if (this.phaseT === 70) Voice.ann('fight', 'Combattez!');
       if (this.phaseT > 100) {
         this.phase = 'fight';
         this.phaseT = 0;
@@ -143,6 +143,7 @@ const G = {
         if (this.timer <= 0) this.timeUp();
       }
     } else if (this.phase === 'ko') {
+      if (this.phaseT === 100 && this.roundWinner !== 2 && this.fighters[this.roundWinner].hp >= this.fighters[this.roundWinner].maxHp) Voice.ann('perfect');
       const loser = this.fighters[1 - this.roundWinner];
       const settled = this.roundWinner === 2 || (loser.state === 'ko' || loser.state === 'down' || loser.state === 'idle');
       if (this.phaseT > 90 && settled) {
@@ -247,7 +248,7 @@ const G = {
     this.projectiles = [];
     this.pending = [];
     Sfx.ko();
-    Sfx.say('K.O.!', 0.9, 0.6);
+    Voice.ann('ko', 'K.O.!');
   },
 
   timeUp() {
@@ -256,7 +257,7 @@ const G = {
     this.phaseT = 0;
     this.timeOver = true;
     this.roundWinner = a.hp === b.hp ? 2 : a.hp > b.hp ? 0 : 1;
-    Sfx.say('Temps écoulé!');
+    Voice.ann('time', 'Temps écoulé!');
     if (this.roundWinner !== 2) this.fighters[1 - this.roundWinner].setState('idle');
   },
 
@@ -270,14 +271,22 @@ const G = {
       this.matchWinner = this.wins[0] === this.wins[1] ? 2 : this.wins[0] >= 2 ? 0 : 1;
       if (this.matchWinner !== 2) {
         const w = this.fighters[this.matchWinner];
-        Sfx.say(`${w.def.name} l'emporte!`);
-        this.winQuote = pick(w.def.win);
+        this.winIdx = Math.floor(Math.random() * w.def.win.length);
+        this.winQuote = w.def.win[this.winIdx];
         const human = this.mode === 'versus' || ((this.mode === 'arcade' || this.mode === 'cpu') && this.matchWinner === 0);
         if (human) this.newUnlocks = recordWin(w.def.id, false, this.fighters[1 - this.matchWinner].def.id);
       }
       Sfx.stopMusic();
       this.phase = 'over';
       this.go('result');
+      if (this.matchWinner === 2) Voice.ann('draw', 'Égalité!');
+      else {
+        const w = this.fighters[this.matchWinner];
+        Voice.queue([
+          ['annonceur/gagne-' + w.def.id, 'ann', `${w.def.name} l'emporte!`, 300],
+          [Voice.path(w, 'win' + this.winIdx), 'f' + w.side, this.winQuote.replace(/\*[^*]*\*/g, '')],
+        ]);
+      }
       return;
     }
     this.round++;
@@ -287,12 +296,13 @@ const G = {
   // ----- Coups spéciaux -----
   callout(f, name) {
     this.popText(name, f.x, f.y - 290, 30, f.def.color, 50);
+    Voice.line(f, 'special');
   },
   startSuper(f, name) {
     this.superFreeze = 48;
     this.superInfo = { f, name, t: 0 };
     Sfx.superStart();
-    Sfx.say(name.replace(/!/g, ''), 1.1, 0.9);
+    Voice.line(f, 'super', name.replace(/!/g, ''));
   },
   spawnProjectile(f, s, isSuper) {
     const dims = {
@@ -658,6 +668,7 @@ const MENU_ITEMS = () => [
   { label: `DIFFICULTÉ : ${DIFF_NAMES[G.diff]}`, desc: 'Gauche / droite pour changer.', go: () => { G.diff = (G.diff + 1) % 3; }, lr: (d) => { G.diff = (G.diff + d + 3) % 3; } },
   { label: `SON : ${Sfx.enabled ? 'OUI' : 'NON'}  ·  MUSIQUE : ${Sfx.music ? 'OUI' : 'NON'}`, desc: 'Entrée : son · Gauche/droite : musique.', go: () => { Sfx.enabled = !Sfx.enabled; }, lr: () => { Sfx.music = !Sfx.music; } },
   { label: `OBJETS : ${Store.data.items ? 'OUI' : 'NON'}`, desc: 'Poutine, castor, sirop, Coupe Stanley... qui tombent du ciel pendant le combat.', go: () => { Store.data.items = !Store.data.items; Store.save(); }, lr: () => { Store.data.items = !Store.data.items; Store.save(); } },
+  { label: `VOIX : ${Sfx.voice ? 'OUI' : 'NON'}`, desc: 'Répliques parlées des personnages et de l\'annonceur.', go: () => { Sfx.voice = !Sfx.voice; Voice.stopAll(); }, lr: () => { Sfx.voice = !Sfx.voice; Voice.stopAll(); } },
   { label: 'COMMANDES', desc: 'Comment se battre comme un vrai député.', go: () => G.go('controls') },
 ];
 
@@ -697,7 +708,7 @@ const SCENES = {
         const q = ROSTER.filter((c) => c.level === 'QC' || c.qc), f = ROSTER.filter((c) => c.level !== 'QC' && !c.qc);
         G.titlePair = [pick(q).id, pick(f).id];
       }
-      if (Input.edge('confirm') || Input.edge('lp') || Input.edge('pause')) { Sfx.init(); Sfx.confirm(); G.go('menu'); }
+      if (Input.edge('confirm') || Input.edge('lp') || Input.edge('pause')) { Sfx.init(); Sfx.confirm(); Voice.ann('title'); G.go('menu'); }
       if (G.sceneT > 60 * 25 && Input.idleMs > 20000) G.startDemo();
     },
     draw(ctx) {
@@ -720,7 +731,7 @@ const SCENES = {
       text(ctx, 'LE TOURNOI POLITIQUE ULTIME · QUÉBEC CONTRE OTTAWA', W / 2, 360, 30, '#fff', { lw: 7 });
       if (Math.floor(G.t / 30) % 2 === 0) text(ctx, 'APPUYEZ SUR ENTRÉE', W / 2, 470, 52, '#fff', { stroke: '#c8102e', lw: 10 });
       text(ctx, 'Parodie humoristique — aucun politicien n\'a été blessé pendant ce combat.', W / 2, H - 28, 18, '#eee', { font: FONT2, lw: 4 });
-      G.clicks.push({ x: 0, y: 0, w: W, h: H, fn: () => { Sfx.init(); Sfx.confirm(); G.go('menu'); } });
+      G.clicks.push({ x: 0, y: 0, w: W, h: H, fn: () => { Sfx.init(); Sfx.confirm(); Voice.ann('title'); G.go('menu'); } });
     },
   },
 
@@ -740,16 +751,16 @@ const SCENES = {
       text(ctx, 'QUÉBEC COMBAT', W / 2, 80, 80, '#ffe14d', { stroke: '#c8102e', lw: 12 });
       const items = MENU_ITEMS();
       items.forEach((it, i) => {
-        const y = 160 + i * 59;
+        const y = 150 + i * 54;
         const sel = i === G.menuIdx;
         ctx.fillStyle = sel ? 'rgba(255,225,77,0.95)' : 'rgba(0,0,0,0.55)';
-        roundRect(ctx, W / 2 - 300, y - 26, 600, 52, 12);
+        roundRect(ctx, W / 2 - 300, y - 23, 600, 46, 12);
         ctx.fill();
         ctx.strokeStyle = '#141414';
         ctx.lineWidth = 3;
         ctx.stroke();
-        text(ctx, it.label, W / 2, y + 2, 34, sel ? '#141414' : '#fff', { stroke: sel ? false : '#000' });
-        G.clicks.push({ x: W / 2 - 300, y: y - 26, w: 600, h: 52, fn: () => { G.menuIdx = i; Sfx.confirm(); it.go(); } });
+        text(ctx, it.label, W / 2, y + 2, 31, sel ? '#141414' : '#fff', { stroke: sel ? false : '#000' });
+        G.clicks.push({ x: W / 2 - 300, y: y - 23, w: 600, h: 46, fn: () => { G.menuIdx = i; Sfx.confirm(); it.go(); } });
       });
       text(ctx, items[G.menuIdx].desc, W / 2, H - 50, 24, '#fff', { font: FONT2, lw: 5 });
     },
@@ -824,7 +835,7 @@ const SCENES = {
       S.choice[ci] = resolveRandom(selCellId(S.cur[ci]), other);
       S.locked[ci] = true;
       Sfx.confirm();
-      Sfx.say(ROSTER_BY_ID[S.choice[ci]].name);
+      Voice.ann('nom-' + S.choice[ci], ROSTER_BY_ID[S.choice[ci]].name);
       if (G.mode === 'cpu' && ci === 0) S.step = 1;
     },
     begin() {
@@ -974,9 +985,20 @@ const SCENES = {
       if (G.sceneT === 1) {
         Sfx.stopMusic();
         const [a, b] = G.fighters;
-        Sfx.say(`${a.def.name}, contre, ${b.def.name}!`, 1.1, 0.8);
+        Voice.preloadFighter(a);
+        Voice.preloadFighter(b);
+        G.vsDone = false;
+        Voice.queue([
+          ['annonceur/nom-' + a.def.id, 'ann', a.def.name],
+          ['annonceur/contre', 'ann', 'contre'],
+          ['annonceur/nom-' + b.def.id, 'ann', b.def.name, 350],
+          [Voice.path(a, 'intro' + a.introIdx), 'f0', a.introQ, 250],
+          [Voice.path(b, 'intro' + b.introIdx), 'f1', b.introQ],
+        ], () => { G.vsDone = true; });
       }
-      if (G.sceneT > 200 || (G.sceneT > 30 && Input.edge('confirm'))) {
+      // l'écran VS dure le temps des présentations (max 15 s), Entrée pour passer
+      if ((G.sceneT > 200 && (G.vsDone || !Sfx.enabled || !Sfx.voice)) || G.sceneT > 900 || (G.sceneT > 30 && Input.edge('confirm'))) {
+        Voice.stopAll();
         G.startRound();
         G.go('fight');
       }
@@ -1099,6 +1121,7 @@ const SCENES = {
   // ---------- Continuer? ----------
   continue: {
     update() {
+      if (G.sceneT === 1) Voice.ann('continue');
       const left = 10 - Math.floor(G.sceneT / 60);
       if (Input.edge('confirm') && G.sceneT > 20) { Sfx.confirm(); G.arcade.continues++; startArcadeFight(); }
       else if (left < 0 || Input.edge('back')) { Sfx.back(); G.go('title'); }
@@ -1122,7 +1145,7 @@ const SCENES = {
   // ---------- Fin du mode arcade ----------
   ending: {
     update() {
-      if (G.sceneT === 1) { Sfx.say('Félicitations! Vous êtes premier ministre de tout!'); G.newUnlocks = recordWin(G.arcade.player, true); }
+      if (G.sceneT === 1) { Voice.ann('ending', 'Félicitations! Vous êtes premier ministre de tout!'); G.newUnlocks = recordWin(G.arcade.player, true); }
       if (G.sceneT > 90 && Input.edge('confirm')) { Sfx.confirm(); G.go('title'); }
     },
     draw(ctx) {
