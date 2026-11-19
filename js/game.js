@@ -273,7 +273,7 @@ const G = {
         Sfx.say(`${w.def.name} l'emporte!`);
         this.winQuote = pick(w.def.win);
         const human = this.mode === 'versus' || ((this.mode === 'arcade' || this.mode === 'cpu') && this.matchWinner === 0);
-        if (human) this.newUnlocks = recordWin(w.def.id, false);
+        if (human) this.newUnlocks = recordWin(w.def.id, false, this.fighters[1 - this.matchWinner].def.id);
       }
       Sfx.stopMusic();
       this.phase = 'over';
@@ -958,7 +958,7 @@ const SCENES = {
         text(ctx, `Super : ${def.super.name}`, bx + 16, by + 118, 18, '#ff9a9a', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
         const un = unlockedSkins(id);
         const key = G.mode === 'versus' ? (i === 0 ? 'H' : '/') : 'H';
-        text(ctx, `Tenue [${key}] : ${SKINS[skinOf(id)].name} (${un.length}/${SKINS.length})`, bx + 16, by + 146, 18, '#9be0ff', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
+        text(ctx, `Tenue [${key}] : ${SKINS[skinOf(id)].name} (${un.length}/${skinsFor(id).length})`, bx + 16, by + 146, 18, '#9be0ff', { align: 'left', font: FONT2, weight: 'bold', lw: 4 });
         text(ctx, nextSkinHint(id), bx + 16, by + 172, 15, '#ccc', { align: 'left', font: FONT2, lw: 3 });
         G.clicks.push({ x: bx, y: by, w: bw, h: 194, fn: () => cycleSkin(id) });
       });

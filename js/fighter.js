@@ -52,7 +52,7 @@ const SP_POSE = { projectile: 'throw', wave: 'throw', rain: 'win', drop: 'win', 
 class Fighter {
   constructor(def, side, skin = 0) {
     this.def = applySkin(def, skin);
-    this.introQ = pick(def.intro);
+    this.introQ = pick(this.def.intro);
     this.side = side;
     this.maxHp = 1000;
     this.meter = 0;
@@ -403,10 +403,15 @@ class Fighter {
       ctx.shadowColor = this.def.color;
       ctx.shadowBlur = 25;
     }
+    if (this.def.look.ghost && !ctx.shadowBlur) {
+      ctx.shadowColor = '#6dff9a';
+      ctx.shadowBlur = 8 + Math.sin(G.t * 0.12) * 4;
+    }
     if (this.flash > 0) ctx.filter = `brightness(${1 + this.flash * 0.12})`;
     drawCharacter(ctx, this.def, this.pose(), this.expr(), G.t, this.state === 'win' ? this.def.winProp || null : this.prop);
     ctx.filter = 'none';
     ctx.restore();
+    if (this.def.look.ghost) drawWisps(ctx, this.x, this.y, G.t, this.side);
     if (this.slow > 0 && this.state !== 'ko' && this.state !== 'down') {
       // flaque de sirop
       ctx.fillStyle = 'rgba(176,98,20,0.8)';

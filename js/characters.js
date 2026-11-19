@@ -310,7 +310,29 @@ function drawHead(ctx, c, expr = 'neutral', t = 0) {
       ctx.fillStyle = '#2a1d14';
       circle(ctx, ex + 2, -3, 3);
       ctx.fill();
+      if (L.ghost) {
+        ctx.fillStyle = '#7dff9a';
+        circle(ctx, ex + 2, -3, 2.2);
+        ctx.fill();
+      }
     }
+    if (L.ghost) {
+      // cernes de mort-vivant
+      ctx.strokeStyle = 'rgba(40,60,45,0.55)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(ex, 1, rx + 1, 0.2, Math.PI - 0.2);
+      ctx.stroke();
+    }
+  }
+  if (L.ghost) {
+    // cicatrice recousue
+    ctx.strokeStyle = '#3d4a3a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-14, -30); ctx.lineTo(-4, -20);
+    for (let i = 0; i < 3; i++) { ctx.moveTo(-14 + i * 4, -22 - i * 1); ctx.lineTo(-8 + i * 4, -28 - i * 1); }
+    ctx.stroke();
   }
   // Lunettes
   if (L.glasses) {
@@ -819,6 +841,18 @@ function drawCharacter(ctx, c, P, expr, t, prop) {
     ctx.restore();
     if (L.jersey) text(ctx, String(c.num === undefined ? 1 : c.num), 2, -42, 30, '#fff', { lw: 5 });
   } else {
+  if (L.tattered) {
+    // veston en lambeaux, troué, plein de terre
+    ctx.fillStyle = '#141414';
+    ctx.beginPath();
+    for (const [x, d] of [[-16, 10], [-4, 14], [8, 9], [18, 13]]) { ctx.moveTo(x - 5, 7); ctx.lineTo(x, 7 - d); ctx.lineTo(x + 5, 7); }
+    ctx.fill();
+    ctx.fillStyle = 'rgba(120,100,70,0.45)';
+    ellipse(ctx, -12, -24, 6, 4, 0.4); ctx.fill();
+    ellipse(ctx, 16, -50, 4, 3, -0.3); ctx.fill();
+    ctx.fillStyle = '#0d0f0d';
+    ellipse(ctx, -14, -46, 4, 5, 0.2); ctx.fill();
+  }
   // chemise / haut
   ctx.fillStyle = L.top || L.shirt;
   ctx.beginPath();
@@ -906,10 +940,57 @@ function drawCharacter(ctx, c, P, expr, t, prop) {
   ctx.rotate(lean * 0.5 + (P.tilt || 0));
   drawHead(ctx, c, expr, t);
   ctx.restore();
+  if (L.noose) drawNoose(ctx, nx, ny, headX, headY, t);
 
   // bras avant (+ accessoire)
   const k = drawArm(fs, P.fH, false);
   if (prop) drawProp(ctx, prop, k.ex, k.ey, Math.atan2(k.ey - k.jy, k.ex - k.jx), c);
+}
+
+// Corde de pendu cassée, autour du cou (tenue « Revenant »)
+function drawNoose(ctx, nx, ny, hx, hy, t) {
+  const cx = (nx + hx) / 2 + 2, cy = ny + (hy + 26 - ny) * 0.45;
+  const rope = (draw, w) => {
+    ctx.strokeStyle = '#141414'; ctx.lineWidth = w + 4; draw(); ctx.stroke();
+    ctx.strokeStyle = '#a8834a'; ctx.lineWidth = w; draw(); ctx.stroke();
+  };
+  // nœud coulant autour du cou
+  rope(() => { ctx.beginPath(); ctx.ellipse(cx, cy, 13, 5, -0.2, 0, Math.PI * 2); }, 5);
+  // gros nœud enroulé derrière la nuque
+  ctx.fillStyle = '#a8834a';
+  ctx.strokeStyle = '#141414';
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, cx - 22, cy - 6, 12, 26, 4);
+  ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = '#6e5228';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < 4; i++) { ctx.moveTo(cx - 22, cy - 1 + i * 6); ctx.lineTo(cx - 10, cy + 1 + i * 6); }
+  ctx.stroke();
+  // bout de corde cassé qui pend et se balance
+  const sw = Math.sin(t * 0.08) * 6;
+  const ex = cx - 18 + sw, ey = cy + 58;
+  rope(() => { ctx.beginPath(); ctx.moveTo(cx - 16, cy + 20); ctx.quadraticCurveTo(cx - 20, cy + 40, ex, ey); }, 5);
+  // bout effiloché
+  ctx.strokeStyle = '#c9a66a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let i = -2; i <= 2; i++) { ctx.moveTo(ex, ey); ctx.lineTo(ex + i * 3, ey + 9 + Math.abs(i)); }
+  ctx.stroke();
+}
+
+// Feux follets verts qui flottent autour du revenant
+function drawWisps(ctx, x, y, t, seed) {
+  for (let i = 0; i < 5; i++) {
+    const a = t * 0.03 + i * 1.26 + seed;
+    const wx = x + Math.cos(a) * 70, wy = y - 150 + Math.sin(a * 1.7) * 90;
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, 14);
+    g.addColorStop(0, 'rgba(190,255,200,0.9)');
+    g.addColorStop(1, 'rgba(90,255,140,0)');
+    ctx.fillStyle = g;
+    circle(ctx, wx, wy, 14);
+    ctx.fill();
+  }
 }
 
 function drawProp(ctx, prop, x, y, ang, c) {

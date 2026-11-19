@@ -56,7 +56,7 @@ the Jacques-Cartier Bridge at night, and the Plains of Abraham.
 
 ## Tenues à débloquer
 
-Every fighter has 4 outfits. Progress is saved in the browser (`localStorage`). On the select screen, press
+Every fighter has 4 outfits (Louis Riel has a fifth, Halloween one). Progress is saved in the browser (`localStorage`). On the select screen, press
 **H** (player 1) or **/** (player 2), or tap the info card, to cycle through unlocked outfits.
 
 | Tenue | Comment la débloquer |
@@ -65,6 +65,7 @@ Every fighter has 4 outfits. Progress is saved in the browser (`localStorage`). 
 | Chandail de hockey | 3 victoires avec le personnage |
 | Bûcheron (chemise à carreaux + tuque) | 8 victoires avec le personnage |
 | Statue dorée | Finir le mode Arcade avec le personnage |
+| **Revenant** (Louis Riel seulement) | Vaincre Macdonald avec Riel. Riel revient d'entre les morts, corde cassée au cou, avec ses propres répliques d'Halloween |
 
 ## Objets
 
