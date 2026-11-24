@@ -238,7 +238,7 @@ class Fighter {
         this.sp = null;
         this.prop = null;
         this.setState('idle');
-        this.spCD = 30;
+        this.spCD = this.spCDBase || 30;
       }
     };
     switch (s.type) {
@@ -300,6 +300,11 @@ class Fighter {
   physics(G) {
     const wasAir = this.airborne;
     if (wasAir || this.vy < 0) this.vy += GRAV;
+    // verglas : on glisse au lieu de s'arrêter net
+    if (G.mod && G.mod.ice && !wasAir && (this.state === 'idle' || this.state === 'walk' || this.state === 'crouch')) {
+      this.vx = lerp(this.slideVx || 0, this.vx, 0.05);
+    }
+    this.slideVx = this.vx;
     this.x += this.vx;
     this.y += this.vy;
     if (this.y >= GROUND) {

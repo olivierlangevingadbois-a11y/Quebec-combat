@@ -60,6 +60,9 @@ ANNOUNCER = {
     'round1': 'Ronde un!', 'round2': 'Ronde deux!', 'final': 'Ronde finale!', 'fight': 'Combattez!',
     'ko': 'Kao!', 'time': 'Temps écoulé!', 'perfect': 'Sans faute!', 'draw': 'Égalité!',
     'ending': 'Félicitations! Vous êtes premier ministre de tout!', 'continue': 'Recomptage judiciaire?',
+    'campagne': 'Campagne électorale!', 'debat': 'Débat des chefs!', 'extra': 'Édition spéciale!',
+    'majoritaire': 'Gouvernement majoritaire!', 'minoritaire': 'Gouvernement minoritaire.',
+    'opposition': 'Opposition officielle.', 'tiers': 'Tiers parti... Ayoye.',
 }
 
 

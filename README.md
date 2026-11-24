@@ -64,7 +64,7 @@ Every fighter has 4 outfits (Louis Riel has a fifth, Halloween one). Progress is
 | Classique | — |
 | Chandail de hockey | 3 victoires avec le personnage |
 | Bûcheron (chemise à carreaux + tuque) | 8 victoires avec le personnage |
-| Statue dorée | Finir le mode Arcade avec le personnage |
+| Statue dorée | Finir le mode Arcade ou gagner une majorité en Campagne avec le personnage |
 | **Revenant** (Louis Riel seulement) | Vaincre Macdonald avec Riel. Riel revient d'entre les morts, corde cassée au cou, avec ses propres répliques d'Halloween |
 
 ## Objets
@@ -102,6 +102,15 @@ python3 tools/gen_voices.py ./voices legault    # one character
 ```
 
 ## Modes
+
+- **Campagne électorale** (new): a roguelite run across a map of Quebec. 7 stages; at each one you pick between two
+  regions, each with its own opponent and **event** that changes the rules:
+  *Tempête de verglas* (icy floor), *Saison des cônes orange* (cones fall on everyone), *Commission d'enquête* (+50 %
+  damage), *Débat télévisé* (no items, 45 s), *Pluie de promesses* (3× items), *Lune de miel* (full super),
+  *Scandale!* (stronger opponent). After every win, pick an **electoral promise** (stackable perk: Baisse d'impôts,
+  Bouclier fiscal, Poutine pour tous, Ligne de parti...). Each fight ends with the front page of *La Chicane*, a
+  fictional newspaper, and the poll moves. Two recounts (lives). The run ends with the *Débat des chefs* (best of 3)
+  and an election night: your poll becomes seats out of 125 (63 = majority). A majority unlocks the golden outfit.
 
 - **Arcade**: beat 6 opponents in a row (difficulty ramps up), with continues.
 - **Versus — 2 joueurs**: two players on one keyboard, or with gamepads.
@@ -143,6 +152,7 @@ js/stages.js      the six arenas
 js/fighter.js     poses (2-bone IK), frame data, fighter state machine
 js/ai.js          CPU opponent
 js/game.js        combat rules, HUD, scenes (title, menu, select, VS, fight, results)
+js/campaign.js    Campagne électorale mode: map, events, promises, newspaper, election night
 tools/            gen_voices.py + dump_lines.js: voice line generator
 audio/voix/       generated voice lines (one folder per character + annonceur)
 ```

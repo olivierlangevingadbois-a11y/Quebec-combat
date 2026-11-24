@@ -21,7 +21,7 @@ const SKINS = [
   { id: 'classique', name: 'Classique', hint: '', ok: () => true },
   { id: 'hockey', name: 'Chandail de hockey', hint: '3 victoires', ok: (id) => (Store.data.wins[id] || 0) >= 3, prog: (id) => `${Math.min(3, Store.data.wins[id] || 0)}/3` },
   { id: 'bucheron', name: 'Bûcheron', hint: '8 victoires', ok: (id) => (Store.data.wins[id] || 0) >= 8, prog: (id) => `${Math.min(8, Store.data.wins[id] || 0)}/8` },
-  { id: 'or', name: 'Statue dorée', hint: 'finir l\'Arcade', ok: (id) => !!Store.data.arcade[id], prog: () => '' },
+  { id: 'or', name: 'Statue dorée', hint: 'finir l\'Arcade ou gagner une majorité', ok: (id) => !!Store.data.arcade[id], prog: () => '' },
   // Tenue spéciale d'Halloween : Riel revient d'entre les morts régler ses comptes avec Macdonald
   { id: 'revenant', only: 'riel', name: 'Revenant', hint: 'vaincre Macdonald avec Riel', ok: () => ((Store.data.beat || {}).riel || []).includes('macdonald'), prog: () => '' },
 ];

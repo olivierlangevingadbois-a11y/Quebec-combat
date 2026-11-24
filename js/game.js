@@ -33,7 +33,9 @@ const G = {
   },
 
   // ===================== Combat =====================
-  startMatch(p1, p2, stage, ctrl2, skins = [0, 0]) {
+  startMatch(p1, p2, stage, ctrl2, skins = [0, 0], opts = {}) {
+    this.firstTo = opts.firstTo || 2;
+    this.mod = opts.mod || null;
     skins = skins.slice();
     if (p1 === p2 && skins[0] === skins[1]) skins[1] = skins[0] === 1 ? 0 : 1; // combat miroir : on distingue J2
     this.fighters = [new Fighter(ROSTER_BY_ID[p1], 0, skins[0]), new Fighter(ROSTER_BY_ID[p2], 1, skins[1])];
@@ -54,14 +56,16 @@ const G = {
     this.pending = [];
     this.items = [];
     this.itemT = rand(240, 420);
-    this.timer = 99;
+    this.timer = (this.mod && this.mod.timer) || 99;
     this.timerF = 0;
+    this.cones = [];
     this.phase = 'intro';
     this.phaseT = 0;
     this.roundWinner = -1;
     this.hitstop = this.superFreeze = this.slowmo = 0;
     this.paused = false;
     this.comboShow = [{ n: 0, t: 0 }, { n: 0, t: 0 }];
+    if (this.mode === 'campaign') Campaign.onRound();
     Sfx.startMusic(STAGES[this.stage].music);
   },
 
@@ -134,6 +138,7 @@ const G = {
       }
     this.projectiles = this.projectiles.filter((p) => !p.dead);
     this.updateItems();
+    if (this.mode === 'campaign') Campaign.tick();
     this.updateFx();
 
     if (this.phase === 'fight') {
@@ -203,7 +208,7 @@ const G = {
     if (def.state === 'hit' || def.state === 'knock') att.combo++;
     else att.combo = 1;
     const scale = att.combo > 1 ? Math.max(0.45, 1 - (att.combo - 1) * 0.12) : 1;
-    const dmg = Math.max(1, Math.round(a.dmg * att.def.pow * scale * (att.boost > 0 ? 1.35 : 1)));
+    const dmg = Math.max(1, Math.round(a.dmg * att.def.pow * scale * (att.boost > 0 ? 1.35 : 1) * (att.dmgMul || 1) * (def.takeMul || 1) * ((this.mod && this.mod.dmg) || 1)));
     def.hp = Math.max(0, def.hp - dmg);
     def.atk = null;
     def.sp = null;
@@ -267,13 +272,14 @@ const G = {
       this.wins[1]++;
     } else this.wins[this.roundWinner]++;
     this.timeOver = false;
-    if (this.wins[0] >= 2 || this.wins[1] >= 2) {
-      this.matchWinner = this.wins[0] === this.wins[1] ? 2 : this.wins[0] >= 2 ? 0 : 1;
+    const ft = this.firstTo || 2;
+    if (this.wins[0] >= ft || this.wins[1] >= ft) {
+      this.matchWinner = this.wins[0] === this.wins[1] ? 2 : this.wins[0] >= ft ? 0 : 1;
       if (this.matchWinner !== 2) {
         const w = this.fighters[this.matchWinner];
         this.winIdx = Math.floor(Math.random() * w.def.win.length);
         this.winQuote = w.def.win[this.winIdx];
-        const human = this.mode === 'versus' || ((this.mode === 'arcade' || this.mode === 'cpu') && this.matchWinner === 0);
+        const human = this.mode === 'versus' || ((this.mode === 'arcade' || this.mode === 'cpu' || this.mode === 'campaign') && this.matchWinner === 0);
         if (human) this.newUnlocks = recordWin(w.def.id, false, this.fighters[1 - this.matchWinner].def.id);
       }
       Sfx.stopMusic();
@@ -360,10 +366,14 @@ const G = {
   },
 
   // ----- Objets -----
+  itemsOn() {
+    if (this.mode === 'campaign') return !(this.mod && this.mod.noItems);
+    return Store.data.items;
+  },
   updateItems() {
-    if (!Store.data.items) return;
+    if (!this.itemsOn()) return;
     if (this.phase === 'fight' && --this.itemT <= 0) {
-      this.itemT = rand(380, 640);
+      this.itemT = rand(380, 640) / ((this.mod && this.mod.itemRate) || 1);
       if (this.items.length < 2) this.items.push({ kind: pick(ITEM_KINDS), x: rand(160, W - 160), y: -40, vy: 3, t: 0, life: 540 });
     }
     const top = GROUND - 28;
@@ -492,6 +502,7 @@ const G = {
         ctx.fill();
       }
     }
+    if (this.mode === 'campaign') Campaign.drawFightLayer(ctx);
     drawStageFront(ctx, this.stage, this.t);
     for (const t of this.texts) {
       const k = t.life / t.max;
@@ -638,6 +649,7 @@ const G = {
     roundRect(ctx, W / 2 - 50, 14, 100, 70, 10);
     ctx.fill();
     text(ctx, String(Math.max(0, this.timer)).padStart(2, '0'), W / 2, 52, 60, this.timer <= 10 ? '#ff4040' : '#fff', { stroke: false });
+    if (this.mod && this.mod.id !== 'none') text(ctx, this.mod.name.toUpperCase(), W / 2, 104, 22, '#ffe14d', { stroke: '#141414', lw: 6 });
   },
 
   drawPause(ctx) {
@@ -661,6 +673,7 @@ const G = {
 
 // ===================== Scènes =====================
 const MENU_ITEMS = () => [
+  { label: 'CAMPAGNE ÉLECTORALE', desc: 'Parcourez le Québec, gagnez des promesses, grimpez dans les sondages. Majorité ou bust!', go: () => G.toSelect('campaign') },
   { label: 'ARCADE', desc: 'Affrontez tous les politiciens, un après l\'autre.', go: () => G.toSelect('arcade') },
   { label: 'VERSUS — 2 JOUEURS', desc: 'Deux joueurs sur le même clavier (ou manettes).', go: () => G.toSelect('versus') },
   { label: 'VERSUS — ORDINATEUR', desc: 'Choisissez votre politicien et votre adversaire.', go: () => G.toSelect('cpu') },
@@ -823,7 +836,7 @@ const SCENES = {
           else { Sfx.back(); G.go('menu'); }
         }
       }
-      const need = G.mode === 'arcade' ? [0] : [0, 1];
+      const need = (G.mode === 'arcade' || G.mode === 'campaign') ? [0] : [0, 1];
       if (need.every((i) => S.locked[i])) {
         S.readyT = (S.readyT || 0) + 1;
         if (S.readyT > 40) this.begin();
@@ -841,7 +854,9 @@ const SCENES = {
     begin() {
       const S = G.sel;
       const diff = G.diff;
-      if (G.mode === 'arcade') {
+      if (G.mode === 'campaign') {
+        Campaign.start(S.choice[0], skinOf(S.choice[0]));
+      } else if (G.mode === 'arcade') {
         const others = shuffle(ROSTER.map((c) => c.id).filter((id) => id !== S.choice[0]));
         G.arcade = { player: S.choice[0], skin: skinOf(S.choice[0]), ladder: others.slice(0, 6), idx: 0, continues: 0 };
         startArcadeFight();
@@ -901,7 +916,7 @@ const SCENES = {
           } });
         }
       // curseurs
-      const curs = G.mode === 'arcade' ? [0] : [0, 1];
+      const curs = (G.mode === 'arcade' || G.mode === 'campaign') ? [0] : [0, 1];
       for (const i of curs) {
         if (G.mode === 'cpu' && i === 1 && S.step === 0) continue;
         const cur = S.cur[i];
@@ -918,6 +933,11 @@ const SCENES = {
       for (const i of [0, 1]) {
         if (G.mode === 'arcade' && i === 1) {
           drawPanelText(ctx, W - 160, 'MODE ARCADE', ['6 adversaires', 'vous attendent.', '', 'Devenez premier', 'ministre de tout!']);
+          continue;
+        }
+        if (G.mode === 'campaign' && i === 1) {
+          const best = Campaign.bestText(selCellId(S.cur[0]));
+          drawPanelText(ctx, W - 160, 'CAMPAGNE', ['7 étapes, 12 régions.', 'Promesses, sondages', 'et débat des chefs.', '', ...best]);
           continue;
         }
         if (G.mode === 'cpu' && i === 1 && S.step === 0) {
@@ -942,7 +962,7 @@ const SCENES = {
       }
       // fiche du personnage au centre
       const fi = G.mode === 'cpu' ? S.step : 0;
-      const shown = [0, 1].filter((i) => !(G.mode === 'arcade' && i === 1) && !(G.mode === 'cpu' && i === 1 && S.step === 0));
+      const shown = [0, 1].filter((i) => !((G.mode === 'arcade' || G.mode === 'campaign') && i === 1) && !(G.mode === 'cpu' && i === 1 && S.step === 0));
       shown.forEach((i, k) => {
         const id = S.locked[i] ? S.choice[i] : selCellId(S.cur[i]);
         const def = ROSTER_BY_ID[id];
@@ -1034,6 +1054,7 @@ const SCENES = {
       ctx.fillRect(0, H - 60, W, 60);
       text(ctx, `${st.name} — ${st.place}`, W / 2, H - 30, 30, '#fff');
       if (G.mode === 'arcade') text(ctx, `COMBAT ${G.arcade.idx + 1} / ${G.arcade.ladder.length}`, W / 2, 190, 36, '#fff');
+      if (G.mode === 'campaign') Campaign.drawVsInfo(ctx);
       G.clicks.push({ x: 0, y: 0, w: W, h: H, fn: () => { G.startRound(); G.go('fight'); } });
     },
   },
@@ -1083,7 +1104,8 @@ const SCENES = {
     },
     next() {
       Sfx.confirm();
-      if (G.mode === 'arcade') {
+      if (G.mode === 'campaign') Campaign.afterMatch();
+      else if (G.mode === 'arcade') {
         if (G.matchWinner === 0) {
           G.arcade.idx++;
           if (G.arcade.idx >= G.arcade.ladder.length) G.go('ending');
@@ -1110,7 +1132,7 @@ const SCENES = {
         text(ctx, w.def.name.toUpperCase(), W / 2 + 160, 235, 50, '#fff');
         speech(ctx, W / 2 + 160, 340, G.winQuote, 0, 560);
         if (G.mode === 'versus') text(ctx, G.matchWinner === 0 ? 'JOUEUR 1 GAGNE' : 'JOUEUR 2 GAGNE', W / 2 + 160, 450, 40, '#fff');
-        if (G.mode === 'arcade' && G.matchWinner === 1) text(ctx, 'Vous avez perdu vos élections...', W / 2 + 160, 450, 34, '#ff8080');
+        if ((G.mode === 'arcade' || G.mode === 'campaign') && G.matchWinner === 1) text(ctx, 'Vous avez perdu vos élections...', W / 2 + 160, 450, 34, '#ff8080');
       }
       drawUnlocks(ctx, W / 2 + 160, 505);
       if (G.sceneT > 60 && Math.floor(G.t / 30) % 2 === 0) text(ctx, 'ENTRÉE POUR CONTINUER', W / 2 + 160, 600, 40, '#fff');
