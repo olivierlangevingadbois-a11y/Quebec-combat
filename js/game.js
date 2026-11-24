@@ -640,6 +640,13 @@ const G = {
       if (left) ctx.fillRect(mx, my, mw * mk, 16);
       else ctx.fillRect(mx + mw * (1 - mk), my, mw * mk, 16);
       text(ctx, full ? 'SUPER PRÊT! ↓ + SPÉCIAL' : 'SUPER', left ? mx + mw + 14 : mx - 14, my + 8, 22, full ? '#ffe14d' : '#ddd', { align: left ? 'left' : 'right' });
+      // rappel des commandes, en petit sous la jauge
+      if (Store.data.hints !== false && this.mode !== 'demo' && !hasTouch && this.ctrls[f.side] === 'human') {
+        const hint = controlsHint(f.side, this.mode);
+        ctx.globalAlpha = 0.85;
+        text(ctx, hint, left ? mx : mx + mw, H - 11, 13, '#fff', { align: left ? 'left' : 'right', font: FONT2, weight: 'bold', lw: 3 });
+        ctx.globalAlpha = 1;
+      }
       // combo
       const c = this.comboShow[f.side];
       if (c.t > 0 && c.n >= 2) text(ctx, `${c.n} COUPS!`, left ? 40 : W - 40, 220, 46 + Math.min(20, c.n * 3), '#ffe14d', { align: left ? 'left' : 'right', stroke: f.def.color, lw: 8 });
@@ -682,6 +689,7 @@ const MENU_ITEMS = () => [
   { label: `SON : ${Sfx.enabled ? 'OUI' : 'NON'}  ·  MUSIQUE : ${Sfx.music ? 'OUI' : 'NON'}`, desc: 'Entrée : son · Gauche/droite : musique.', go: () => { Sfx.enabled = !Sfx.enabled; }, lr: () => { Sfx.music = !Sfx.music; } },
   { label: `OBJETS : ${Store.data.items ? 'OUI' : 'NON'}`, desc: 'Poutine, castor, sirop, Coupe Stanley... qui tombent du ciel pendant le combat.', go: () => { Store.data.items = !Store.data.items; Store.save(); }, lr: () => { Store.data.items = !Store.data.items; Store.save(); } },
   { label: `VOIX : ${Sfx.voice ? 'OUI' : 'NON'}`, desc: 'Répliques parlées des personnages et de l\'annonceur.', go: () => { Sfx.voice = !Sfx.voice; Voice.stopAll(); }, lr: () => { Sfx.voice = !Sfx.voice; Voice.stopAll(); } },
+  { label: `RAPPEL DES COMMANDES : ${Store.data.hints !== false ? 'OUI' : 'NON'}`, desc: 'Petit aide-mémoire des touches au bas de l\'écran pendant les combats.', go: () => { Store.data.hints = Store.data.hints === false; Store.save(); }, lr: () => { Store.data.hints = Store.data.hints === false; Store.save(); } },
   { label: 'COMMANDES', desc: 'Comment se battre comme un vrai député.', go: () => G.go('controls') },
 ];
 
@@ -764,16 +772,16 @@ const SCENES = {
       text(ctx, 'QUÉBEC COMBAT', W / 2, 80, 80, '#ffe14d', { stroke: '#c8102e', lw: 12 });
       const items = MENU_ITEMS();
       items.forEach((it, i) => {
-        const y = 150 + i * 54;
+        const y = 142 + i * 46;
         const sel = i === G.menuIdx;
         ctx.fillStyle = sel ? 'rgba(255,225,77,0.95)' : 'rgba(0,0,0,0.55)';
-        roundRect(ctx, W / 2 - 300, y - 23, 600, 46, 12);
+        roundRect(ctx, W / 2 - 300, y - 19, 600, 38, 11);
         ctx.fill();
         ctx.strokeStyle = '#141414';
         ctx.lineWidth = 3;
         ctx.stroke();
-        text(ctx, it.label, W / 2, y + 2, 31, sel ? '#141414' : '#fff', { stroke: sel ? false : '#000' });
-        G.clicks.push({ x: W / 2 - 300, y: y - 23, w: 600, h: 46, fn: () => { G.menuIdx = i; Sfx.confirm(); it.go(); } });
+        text(ctx, it.label, W / 2, y + 2, 26, sel ? '#141414' : '#fff', { stroke: sel ? false : '#000' });
+        G.clicks.push({ x: W / 2 - 300, y: y - 19, w: 600, h: 38, fn: () => { G.menuIdx = i; Sfx.confirm(); it.go(); } });
       });
       text(ctx, items[G.menuIdx].desc, W / 2, H - 50, 24, '#fff', { font: FONT2, lw: 5 });
     },
@@ -1274,6 +1282,14 @@ function drawUnlocks(ctx, x, y) {
     const s = 30 + Math.sin(G.t * 0.2) * 2;
     text(ctx, `★ NOUVELLE TENUE : ${n.toUpperCase()} ★`, x, y + i * 40, s, '#9be0ff', { stroke: '#0a4ea2', lw: 8 });
   });
+}
+// Aide-mémoire des touches pour le HUD (manette si branchée)
+function controlsHint(side, mode) {
+  const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+  if (pads[side]) return 'Manette : A poing · B pied · X/Y spécial · ↓ + spécial = SUPER · Start pause';
+  if (side === 1) return 'J2 : ← → ↑ ↓ · , poing · . pied · / spécial · ↓ + / = SUPER';
+  if (mode === 'versus') return 'J1 : W A S D · F poing · G pied · H spécial · S + H = SUPER · Échap pause';
+  return 'WASD/flèches · F/J poing · G/K pied · H/L spécial · ↓ + spécial = SUPER · Échap pause';
 }
 function shownTop() {
   return 664;

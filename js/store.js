@@ -2,7 +2,7 @@
 // ---------- Progression sauvegardée (localStorage) + tenues à débloquer ----------
 const Store = (() => {
   const KEY = 'quebec-combat-v1';
-  let data = { wins: {}, arcade: {}, skin: {}, beat: {}, items: true };
+  let data = { wins: {}, arcade: {}, skin: {}, beat: {}, items: true, hints: true };
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) data = Object.assign(data, JSON.parse(raw));
@@ -13,7 +13,7 @@ const Store = (() => {
   return {
     get data() { return data; },
     save,
-    reset() { data = { wins: {}, arcade: {}, skin: {}, beat: {}, items: data.items }; save(); },
+    reset() { data = { wins: {}, arcade: {}, skin: {}, beat: {}, items: data.items, hints: data.hints }; save(); },
   };
 })();
 
